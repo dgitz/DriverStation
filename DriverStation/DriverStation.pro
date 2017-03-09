@@ -17,15 +17,19 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    receiver.cpp \
-    transmitter.cpp \
-    udpmessage.cpp
+    udpreceiver.cpp \
+    udptransmitter.cpp \
+    udpmessage.cpp \
+    tcptransmitter.cpp \
+    tcpreceiver.cpp
 
 HEADERS  += mainwindow.h \
     helper.h \
-    receiver.h \
-    transmitter.h \
-    udpmessage.h
+    udptransmitter.h \
+    udpmessage.h \
+    udpreceiver.h \
+    tcpreceiver.h \
+    tcptransmitter.h
 
 FORMS    += mainwindow.ui
 

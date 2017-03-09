@@ -10,10 +10,12 @@
 #include <QTreeWidget>
 #include <QtCharts>
 #include <QLineSeries>
-#include <receiver.h>
-#include <transmitter.h>
+#include <udpreceiver.h>
+#include <udptransmitter.h>
+#include <tcpreceiver.h>
 #include <QTouchEvent>
 #include <QHostInfo>
+#include <QCloseEvent>
 
 
 
@@ -69,8 +71,9 @@ signals:
 
 private:
     Ui::MainWindow *ui;
-    Receiver myReceiver;
-    Transmitter myTransmitter;
+    UDPReceiver myUDPReceiver;
+    UDPTransmitter myUDPTransmitter;
+    TCPReceiver myTCPReceiver;
    // QChart *ResourceChart;
     //QChartView *ResourceChartView;
 

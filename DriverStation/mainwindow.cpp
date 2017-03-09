@@ -48,20 +48,22 @@ MainWindow::MainWindow(QWidget *parent) :
    //window.resize(400,300);
    //window.show();
     messageviewer_filter = "";
-    myTransmitter.set_RC_server(QString::fromStdString(default_ROSCORE));
+    myUDPTransmitter.set_RC_server(QString::fromStdString(default_ROSCORE));
 
-    myReceiver.Start();
-    connect(&myReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
-    connect(&myReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
+    myUDPReceiver.Start();
+    myTCPReceiver.Start();
+    connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
+    connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
+    connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
 
-    connect(&myReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
-    connect(&myReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
+    connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
+    connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
     QTimer *timer_10ms = new QTimer(this);
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_commstatus()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
 
-    connect(&myReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
+    connect(&myTCPReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
     timer_10ms->start(10);
 
     QTimer *timer_100ms = new QTimer(this);
@@ -77,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
 void MainWindow::update_imageview(QPixmap pic)
 {
     ui->label->setPixmap(pic);
-    //ui->label->show();
+    ui->label->show();
 
 }
 
@@ -93,7 +95,7 @@ void MainWindow::check_set_allcontrols_todefault()
 
 void MainWindow::update_commstatus()
 {
-    qint64 time_sincelastcomm = myReceiver.get_lastcomm();
+    qint64 time_sincelastcomm = myUDPReceiver.get_lastcomm();
     if(time_sincelastcomm > 500)// mS
     {
         armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
@@ -150,7 +152,7 @@ void MainWindow::send_Heartbeat_message()
     QDateTime currentdatetime = QDateTime::currentDateTime();
     quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
     quint64 unixtime2 = unixtime + 100; //Should be 100 mS into the future
-    myTransmitter.send_Heartbeat_0xAB31(DeviceName.toStdString(),unixtime,unixtime2);
+    myUDPTransmitter.send_Heartbeat_0xAB31(DeviceName.toStdString(),unixtime,unixtime2);
 }
 
 void MainWindow::send_RC_message(int a)
@@ -158,7 +160,7 @@ void MainWindow::send_RC_message(int a)
 }
 void MainWindow::send_Arm_Command_message(int a)
 {
-    myTransmitter.send_ArmCommand_0xAB27(armdisarm_command);
+    myUDPTransmitter.send_ArmCommand_0xAB27(armdisarm_command);
 }
 
 MainWindow::~MainWindow()
@@ -171,9 +173,10 @@ void MainWindow::stop_system(bool value)
 void MainWindow::launch_system(bool value)
 {
 }
-
 void MainWindow::kill_application(bool value)
 {
+    qDebug() << "I died.";
+    myTCPReceiver.Stop();
     qApp->exit();
 }
 void MainWindow::changefilter_messageviewer()
