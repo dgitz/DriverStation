@@ -85,23 +85,26 @@ void TCPReceiver::Stop()
 void TCPReceiver::processPendingData()
 {
     QByteArray data = tcpSocket->readAll();
-    QList<QByteArray> items = data.split(',');
-    int message_id = items.at(0).toInt();
-    qDebug() << "Message ID" << message_id << " len: " << data.size();
-    QPixmap image;
-    QByteArray image_data;
-    QString str;
-
+    qDebug() << "Got: " << data.length() << " bytes.";
+    QString tempstr = data;
+    int message_id = data.mid(0,data.indexOf(",")).toInt();
+    QString rest = data.mid(data.indexOf(",")+1);
+    std::string streamname;
+    quint32 width,height;
+    quint8 encoding;
+    QByteArray imagedata;
+    QPixmap imagemap;
+    /*
     switch(message_id)
     {
-        case IMAGE_ID:
-          THE PROBLEM IS THAT THE IMAGE SHOULD ONLY BE IN ITEMS.AT(4), BUT DUE TO THE ITEM CONTENTS IT IS IN ITEMS.AT(4)-ITEMS.AT(412).
-          image.loadFromData(items.at(4));
-          emit new_image(image);
+
+          //image.loadFromData(items.at(4));
+          //emit new_image(image);
             break;
         default:
             break;
     }
+    */
 }
 
 /*

@@ -8,6 +8,7 @@ QT       += core gui
 QT += gui
 QT += network
 QT += charts
+QT += gamepad
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,17 +20,19 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     udpreceiver.cpp \
     udptransmitter.cpp \
-    udpmessage.cpp \
     tcptransmitter.cpp \
-    tcpreceiver.cpp
+    tcpreceiver.cpp \
+    ipmessage.cpp \
+    gamepadmonitor.cpp
 
 HEADERS  += mainwindow.h \
     helper.h \
     udptransmitter.h \
-    udpmessage.h \
     udpreceiver.h \
     tcpreceiver.h \
-    tcptransmitter.h
+    tcptransmitter.h \
+    ipmessage.h \
+    gamepadmonitor.h
 
 FORMS    += mainwindow.ui
 

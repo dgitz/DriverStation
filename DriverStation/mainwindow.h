@@ -13,11 +13,26 @@
 #include <udpreceiver.h>
 #include <udptransmitter.h>
 #include <tcpreceiver.h>
+#include "gamepadmonitor.h"
 #include <QTouchEvent>
 #include <QHostInfo>
 #include <QCloseEvent>
+#include <QGamepad>
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <linux/joystick.h>
 
+#define JOY_X_AXIS 0
+#define JOY_Y_AXIS 1
+#define JOY_Z_AXIS 2
+#define JOY_POV_HORZ 3
+#define JOY_POV_VERT 4
+#define JOY_BUTTON_TRIGGER 0
+#define JOY_BUTTON_MIDDLE 1
+#define JOY_BUTTON_SIDE 3
 
 using namespace QtCharts;
 namespace Ui {
@@ -45,6 +60,7 @@ public slots:
     void clearfilter_messageviewer();
     void update_devicelist(const Diagnostic &diag);
     void update_devicelist(const Device &device);
+    void read_joystick();
     void check_set_allcontrols_todefault();
     void update_devicelist();
     void update_devicelistviewer();
@@ -59,6 +75,7 @@ public slots:
     void b2_pressed();
     void b3_pressed();
     void b4_pressed();
+    void update_CalibrationPanel();
 
     void bRTH_pressed();
 
@@ -74,6 +91,8 @@ private:
     UDPReceiver myUDPReceiver;
     UDPTransmitter myUDPTransmitter;
     TCPReceiver myTCPReceiver;
+
+
    // QChart *ResourceChart;
     //QChartView *ResourceChartView;
 
@@ -84,6 +103,12 @@ private:
     int armdisarm_command;
     int armdisarm_state;
 
+    //GamepadMonitor monitor;
+
+
+    int joy_fd;
+    double *joy_axis;
+    char *joy_button;
 
 };
 

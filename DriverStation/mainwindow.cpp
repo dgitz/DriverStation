@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer *timer_10ms = new QTimer(this);
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_commstatus()));
+
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
 
     connect(&myTCPReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
@@ -72,6 +73,45 @@ MainWindow::MainWindow(QWidget *parent) :
 
     timer_100ms->start(100);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
+
+
+    joy_axis = NULL;
+    joy_button = NULL;
+    joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
+    if(joy_fd < 0)
+    {
+        qDebug() << "Couldn't open joystick. Exiting.";
+        kill_application(true);
+    }
+    else
+    {
+        qDebug() << "f: " << joy_fd;
+        int num_axes;
+        int num_buttons;
+        char name[80];
+        num_axes = 0;
+        num_buttons = 0;
+        joy_axis = NULL;
+        joy_button = NULL;
+        ioctl(joy_fd,JSIOCGAXES,&num_axes);
+
+        ioctl(joy_fd,JSIOCGBUTTONS,&num_buttons);
+        if((num_axes == 0) || (num_buttons == 0))
+        {
+            qDebug() << "Couldn't read joystick. Exiting.";
+            kill_application(true);
+        }
+        ioctl(joy_fd,JSIOCGNAME(80),&name);
+        joy_axis = (double *)calloc(num_axes,sizeof(double));
+        joy_button = (char *)calloc(num_buttons,sizeof(char));
+        fcntl(joy_fd,F_SETFL,O_NONBLOCK);
+        qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
+        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
+
+    }
+
+    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+
 
 
 
@@ -205,6 +245,62 @@ void MainWindow::update_armeddisarmed_text(int value)
          case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
          case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED";
      }
+}
+void MainWindow::read_joystick()
+{
+
+    struct js_event js;
+    read(joy_fd,&js,sizeof(struct js_event));
+    switch (js.type & ~JS_EVENT_INIT)
+    {
+        case JS_EVENT_AXIS:
+            joy_axis[js.number] = js.value;
+            break;
+        case JS_EVENT_BUTTON:
+            joy_button[js.number] = js.value;
+            break;
+    }
+    //qDebug() << "Axis: 0 " << joy_axis[0];
+
+}
+void MainWindow::update_CalibrationPanel()
+{
+    ui->XAxis->setValue((double)(joy_axis[JOY_X_AXIS]));
+    ui->YAxis->setValue((double)(joy_axis[JOY_Y_AXIS]));
+    ui->ZAxis->setValue((double)(joy_axis[JOY_Z_AXIS]));
+    ui->bJoyButton1->setDown(joy_button[JOY_BUTTON_TRIGGER]);
+    ui->bJoyButton2->setDown(joy_button[JOY_BUTTON_MIDDLE]);
+    ui->bJoyButton3->setDown(joy_button[JOY_BUTTON_SIDE]);
+    if(joy_axis[JOY_POV_HORZ] < 0)
+    {
+        ui->bJoyPOVLeft->setDown(true);
+        ui->bJoyPOVRight->setDown(false);
+    }
+    else if(joy_axis[JOY_POV_HORZ] > 0)
+    {
+        ui->bJoyPOVLeft->setDown(false);
+        ui->bJoyPOVRight->setDown(true);
+    }
+    else
+    {
+        ui->bJoyPOVLeft->setDown(false);
+        ui->bJoyPOVRight->setDown(false);
+    }
+    if(joy_axis[JOY_POV_VERT] > 0)
+    {
+        ui->bJoyPOVDown->setDown(true);
+        ui->bJoyPOVUp->setDown(false);
+    }
+    else if(joy_axis[JOY_POV_VERT] < 0)
+    {
+        ui->bJoyPOVDown->setDown(false);
+        ui->bJoyPOVUp->setDown(true);
+    }
+    else
+    {
+        ui->bJoyPOVDown->setDown(false);
+        ui->bJoyPOVUp->setDown(false);
+    }
 }
 
 void MainWindow::update_devicelist()

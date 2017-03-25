@@ -56,7 +56,7 @@
 UDPReceiver::UDPReceiver(QWidget *parent)
     : QObject(parent)
 {
-    udpmessagehandler = new UDPMessageHandler();
+    ipmessagehandler = new IPMessageHandler();
     lastcomm_timer.restart();
 }
 void UDPReceiver::Start()
@@ -84,7 +84,7 @@ void UDPReceiver::processPendingDatagrams()
             case ARM_STATUS_ID:
             {
                 int state;
-                if(udpmessagehandler->decode_Arm_StatusUDP(items,&state))
+                if(ipmessagehandler->decode_Arm_StatusUDP(items,&state))
                 {
                     lastcomm_timer.restart();
                     emit new_armedstatusmessage(state);
@@ -95,7 +95,7 @@ void UDPReceiver::processPendingDatagrams()
             {
                 std::string devicename,nodename,description;
                 int system,subsystem,component,diagtype,diagmessage,level;
-                if(udpmessagehandler->decode_DiagnosticUDP(items,&devicename,&nodename,&system,&subsystem,&component,&diagtype,&level,&diagmessage,&description))
+                if(ipmessagehandler->decode_DiagnosticUDP(items,&devicename,&nodename,&system,&subsystem,&component,&diagtype,&level,&diagmessage,&description))
                 {
                     lastcomm_timer.restart();
                     Diagnostic newdiag;
@@ -115,7 +115,7 @@ void UDPReceiver::processPendingDatagrams()
             case DEVICE_ID:
             {
                 std::string deviceparent,devicename,devicetype,architecture;
-                if(udpmessagehandler->decode_DeviceUDP(items,&deviceparent,&devicename,&devicetype,&architecture))
+                if(ipmessagehandler->decode_DeviceUDP(items,&deviceparent,&devicename,&devicetype,&architecture))
                 {
                     lastcomm_timer.restart();
                     Device newdevice;
@@ -131,7 +131,7 @@ void UDPReceiver::processPendingDatagrams()
             {
                 std::string nodename;
                 int ram,cpu;
-                if(udpmessagehandler->decode_ResourceUDP(items,&nodename,&ram,&cpu))
+                if(ipmessagehandler->decode_ResourceUDP(items,&nodename,&ram,&cpu))
                 {
                     lastcomm_timer.restart();
                     Resource newresource;

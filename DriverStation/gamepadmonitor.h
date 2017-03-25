@@ -1,22 +1,12 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
+** Copyright (C) 2015 The Qt Company Ltd.
+** Contact: http://www.qt.io/licensing/
 **
-** This file is part of the examples of the Qt Toolkit.
+** This file is part of the examples of the Qt Gamepad module
 **
 ** $QT_BEGIN_LICENSE:BSD$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** BSD License Usage
-** Alternatively, you may use this file under the terms of the BSD license
-** as follows:
+** You may use this file under the terms of the BSD license as follows:
 **
 ** "Redistribution and use in source and binary forms, with or without
 ** modification, are permitted provided that the following conditions are
@@ -48,32 +38,24 @@
 **
 ****************************************************************************/
 
-#ifndef TCPTRANSMITTER_H
-#define TCPTRANSMITTER_H
+#ifndef GAMEPADMONITOR_H
+#define GAMEPADMONITOR_H
 
-#include <QDialog>
-#include <QHostAddress>
-#include <QTimer>
-#include "helper.h"
-#include "ipmessage.h"
-QT_BEGIN_NAMESPACE
-class QLabel;
-class QPushButton;
-class QTCPSocket;
-QT_END_NAMESPACE
+#include <QtCore/QObject>
+#include <QtCore/QTimer>
 
-class TCPTransmitter : public QObject
+class QGamepad;
+
+class GamepadMonitor : public QObject
 {
     Q_OBJECT
-
 public:
-    TCPTransmitter(QWidget *parent = 0);
-signals:
+    explicit GamepadMonitor(QObject *parent = 0);
+    ~GamepadMonitor();
+    bool event(QEvent *event);
+
 private:
-        IPMessageHandler *ipmessagehandler;
-
-
-
+    QGamepad *m_gamepad;
 };
 
-#endif
+#endif // GAMEPADMONITOR_H

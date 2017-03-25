@@ -56,7 +56,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include "helper.h"
-#include "udpmessage.h"
+#include "ipmessage.h"
 QT_BEGIN_NAMESPACE
 class QLabel;
 class QPushButton;
@@ -83,7 +83,7 @@ signals:
     void new_image(const QPixmap&);
 private:
     QTcpSocket *tcpSocket;
-
+    IPMessageHandler *ipmessagehandler;
     //QTCPSocket *TCPSocket;
    // QHostAddress groupAddress;
    // TCPMessageHandler *TCPmessagehandler;
