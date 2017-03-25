@@ -22,8 +22,7 @@ SOURCES += main.cpp\
     udptransmitter.cpp \
     tcptransmitter.cpp \
     tcpreceiver.cpp \
-    ipmessage.cpp \
-    gamepadmonitor.cpp
+    ipmessage.cpp
 
 HEADERS  += mainwindow.h \
     helper.h \
@@ -31,8 +30,7 @@ HEADERS  += mainwindow.h \
     udpreceiver.h \
     tcpreceiver.h \
     tcptransmitter.h \
-    ipmessage.h \
-    gamepadmonitor.h
+    ipmessage.h
 
 FORMS    += mainwindow.ui
 

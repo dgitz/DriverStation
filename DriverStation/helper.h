@@ -40,5 +40,16 @@ struct Device
     std::vector<Node> Nodes;
 };
 
+struct JoystickControl
+{
+    int Axis_id;
+    QString name;
+    double deadband;
+    qint32 value;
+    qint32 min;
+    qint32 max;
+    bool invert;
+};
+
 #endif
 

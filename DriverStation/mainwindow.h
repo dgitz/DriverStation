@@ -13,16 +13,17 @@
 #include <udpreceiver.h>
 #include <udptransmitter.h>
 #include <tcpreceiver.h>
-#include "gamepadmonitor.h"
 #include <QTouchEvent>
 #include <QHostInfo>
 #include <QCloseEvent>
-#include <QGamepad>
+#include <QFileInfo>
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <fstream>
+#include <iostream>
 #include <linux/joystick.h>
 
 #define JOY_X_AXIS 0
@@ -76,6 +77,13 @@ public slots:
     void b3_pressed();
     void b4_pressed();
     void update_CalibrationPanel();
+    void update_CalibrationGroup();
+    void calibrate_Axis(const int);
+    void calibrate_XAxis(const bool);
+    void calibrate_YAxis(const bool);
+    void calibrate_ZAxis(const bool);
+    void save_calibration(const bool);
+    void cancel_calibration(const bool);
 
     void bRTH_pressed();
 
@@ -91,6 +99,9 @@ private:
     UDPReceiver myUDPReceiver;
     UDPTransmitter myUDPTransmitter;
     TCPReceiver myTCPReceiver;
+    JoystickControl lookup_joystickcontrol(int v);
+    QString joystickcalibrationfile_path;
+    bool create_emptyjoystickcalibrationfile();
 
 
    // QChart *ResourceChart;
@@ -102,13 +113,13 @@ private:
     QString DeviceName;
     int armdisarm_command;
     int armdisarm_state;
-
-    //GamepadMonitor monitor;
+    std::vector<JoystickControl> joystickcontrols;
 
 
     int joy_fd;
     double *joy_axis;
     char *joy_button;
+    QTimer *timer_10ms;
 
 };
 
