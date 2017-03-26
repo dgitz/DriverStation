@@ -119,47 +119,24 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         else
         {
-            qDebug() << "Couldn't find joystick calibration file";
+            qDebug() << "Couldn't find joystick calibration file, creating new one.";
             create_emptyjoystickcalibrationfile();
+        }
+        Joystick joy;
+        bool found = lookup_joystick(name,joy);
+        if(found == true)
+        {
+            qDebug() << "Found Joystick: " << QString::fromStdString(name) << " in Cal File";
+            joystick = joy;
+        }
+        else
+        {
+            qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
+            bool create = create_defaultjoystick(name,num_axes);
         }
         connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
 
     }
-
-    {
-        JoystickControl joy;
-        joy.Axis_id = JOY_X_AXIS;
-        joy.name = "XAxis";
-        joy.deadband = 0.0;
-        joy.invert = false;
-        joy.value = 0;
-        joy.max = 32768;
-        joy.min = -32768;
-        joystickcontrols.push_back(joy);
-    }
-    {
-        JoystickControl joy;
-        joy.Axis_id = JOY_Y_AXIS;
-        joy.name = "YAxis";
-        joy.deadband = 10.0;
-        joy.invert = true;
-        joy.value = 0;
-        joy.max = 1000;
-        joy.min = -1000;
-        joystickcontrols.push_back(joy);
-    }
-    {
-        JoystickControl joy;
-        joy.Axis_id = JOY_Z_AXIS;
-        joy.name = "ZAxis";
-        joy.deadband = 0.0;
-        joy.invert = false;
-        joy.value = 0;
-        joy.max = 32768;
-        joy.min = -32768;
-        joystickcontrols.push_back(joy);
-    }
-
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
 
 
@@ -214,21 +191,22 @@ void MainWindow::calibrate_Axis(int v)
     ui->bXAxisCal->setEnabled(false);
     ui->bYAxisCal->setEnabled(false);
     ui->bZAxisCal->setEnabled(false);\
-    JoystickControl joy = lookup_joystickcontrol(v);
+    Axis axis = lookup_joystickaxis(joystick,v);
+    qDebug() << "id: " << QString::number(v);
+    ui->lCalibrateOption->setText("Calibrating: " + axis.name);
 
-    ui->lCalibrateOption->setText("Calibrating: " + joy.name);
+    ui->dCalibrateDeadband->setValue(axis.deadband);
+    ui->lCalibrateDeadband->setText("Deadband: " + QString::number(axis.deadband) + "%");
 
-    ui->dCalibrateDeadband->setValue(joy.deadband);
-    ui->lCalibrateDeadband->setText("Deadband: " + QString::number(joy.deadband) + "%");
+    ui->dCalibrateMax->setValue(axis.max);
+    ui->lCalibrateMax->setText("Max: " + QString::number(axis.max));
 
-    ui->dCalibrateMax->setValue(joy.max);
-    ui->lCalibrateMax->setText("Max: " + QString::number(joy.max));
+    ui->dCalibrateMin->setValue(axis.min);
+    ui->lCalibrateMin->setText("Min: " + QString::number(axis.min));
 
-    ui->dCalibrateMin->setValue(joy.min);
-    ui->lCalibrateMin->setText("Min: " + QString::number(joy.min));
-
-    ui->chbInvert->setChecked(joy.invert);
-
+    ui->dCalibrateNeutral->setValue(axis.neutral);
+    ui->lCalibrateNeutral->setText("Neutral: " + QString::number(axis.neutral));
+    ui->chbInvert->setChecked(axis.invert);
     ui->groupCalibrate->show();
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
 
@@ -240,6 +218,7 @@ void MainWindow::update_CalibrationGroup()
     ui->lCalibrateDeadband->setText("Deadband: " + QString::number(ui->dCalibrateDeadband->value()) + "%");
     ui->lCalibrateMax->setText("Max: " + QString::number(ui->dCalibrateMax->value()));
     ui->lCalibrateMin->setText("Min: " + QString::number(ui->dCalibrateMin->value()));
+    ui->lCalibrateNeutral->setText("Neutral: " + QString::number(ui->dCalibrateNeutral->value()));
 }
 
 void MainWindow::update_commstatus()
@@ -252,18 +231,83 @@ void MainWindow::update_commstatus()
     }
 
 }
-JoystickControl MainWindow::lookup_joystickcontrol(int v)
+bool MainWindow::lookup_joystick(QString name,Joystick& joy)
 {
-    for(int i = 0; i < joystickcontrols.size(); i++)
+    std::ifstream infile(joystickcalibrationfile_path.toStdString());
+    std::string line;
+    while(std::getline(infile,line))
     {
-        if(v == joystickcontrols.at(i).Axis_id)
+        std::size_t found_joy = line.find("<Joystick>");
+        if(found_joy != std::string::npos)
         {
-            return joystickcontrols.at(i);
+            std::getline(infile,line);
+            std::size_t found_name = line.find(name.toStdString());
+            if(found_name != std::string::npos)
+            {
+                joy.name = name;
+                std::getline(infile,line);
+                int num_axes = std::stoi(get_value_fromtag(line,"AxisCount"));
+                int axis_count_found = 0;
+
+                while(axis_count_found < num_axes)
+                {
+                    std::getline(infile,line);
+                    std::size_t found_newaxis = line.find("<Axis>");
+                    if(found_newaxis != std::string::npos)
+                    {
+                        axis_count_found++;
+
+                    }
+                    if(axis_count_found > 0)
+                    {
+                        Axis axis;
+                        std::getline(infile,line);
+                        axis.id = std::stoi(get_value_fromtag(line,"ID"));
+                        std::getline(infile,line);
+                        axis.name = QString::fromStdString(get_value_fromtag(line,"Name"));
+                        std::getline(infile,line);
+                        axis.max = std::stoi(get_value_fromtag(line,"MaxValue"));
+                        std::getline(infile,line);
+                        axis.min = std::stoi(get_value_fromtag(line,"MinValue"));
+                        std::getline(infile,line);
+                        axis.neutral = std::stoi(get_value_fromtag(line,"NeutralValue"));
+                        std::getline(infile,line);
+                        axis.deadband = std::stod(get_value_fromtag(line,"Deadband"));
+                        std::getline(infile,line);
+                        axis.invert = std::stoi(get_value_fromtag(line,"Invert"));
+                        joy.axes.push_back(axis);
+                        std::getline(infile,line);
+                    }
+                }
+                qDebug() << "Found all axis's";
+                return true;
+            }
         }
     }
-    JoystickControl joy;
-    joy.Axis_id = -1;
-    return joy;
+    return false;
+}
+
+Axis MainWindow::lookup_joystickaxis(Joystick joy, int v)
+{
+    for(int i = 0; i < joy.axes.size(); i++)
+    {
+        if(v == joy.axes.at(i).id)
+        {
+
+            return joy.axes.at(i);
+        }
+    }
+    Axis axis;
+    axis.id = -1;
+    return axis;
+}
+std::string MainWindow::get_value_fromtag(std::string line, std::string param)
+{
+    std::string tempstr = "";
+    std::string start_tag = "<" + param + ">";
+    std::string stop_tag = "</" + param + ">";
+    tempstr = line.substr(line.find(start_tag)+start_tag.length(),line.find(stop_tag)-(line.find(start_tag)+start_tag.length()));
+    return tempstr;
 }
 
 void MainWindow::bRTH_pressed()
@@ -538,12 +582,71 @@ std::string MainWindow::get_level_string(int value)
 }
 bool MainWindow::create_emptyjoystickcalibrationfile()
 {
-
     std::ofstream outfile;
     outfile.open(joystickcalibrationfile_path.toStdString());
     outfile << "<?xml version=\"1.0\" ?>\r\n";
     outfile << "<JoystickCalibrationFile>\r\n";
+    outfile << "\t<JoystickList>\r\n";
+    outfile << "\t</JoystickList>\r\n";
     outfile << "</JoystickCalibrationFile>\r\n";
     outfile.close();
 
 }
+bool MainWindow::create_defaultjoystick(QString name,int numaxes)
+{
+    std::vector<std::string> old_file;
+    std::ifstream infile(joystickcalibrationfile_path.toStdString());
+    std::string line;
+    qint32 line_to_insert = 0;
+    while(std::getline(infile,line))
+    {
+        old_file.push_back(line);
+        std::size_t new_joystickline = line.find("</JoystickList>");
+
+        if(new_joystickline == std::string::npos)
+        {
+            line_to_insert++;
+        }
+    }
+    line_to_insert -= 1;
+    std::vector<std::string> newlist;
+    newlist.push_back("\t\t<Joystick>\r\n");
+    newlist.push_back("\t\t\t<Name>" + name.toStdString() + "</Name>\r\n");
+    newlist.push_back("\t\t\t<AxisCount>" + std::to_string(numaxes) + "</AxisCount>\r\n");
+    for(int i = 0; i < numaxes; i++)
+    {
+        newlist.push_back("\t\t\t<Axis>\r\n");
+        newlist.push_back("\t\t\t\t<ID>" + std::to_string(i) + "</ID>\r\n");
+        newlist.push_back("\t\t\t\t<Name></Name>\r\n");
+        newlist.push_back("\t\t\t\t<MaxValue>32768</MaxValue>\r\n");
+        newlist.push_back("\t\t\t\t<MinValue>-32768</MinValue>\r\n");
+        newlist.push_back("\t\t\t\t<NeutralValue>0</NeutralValue>\r\n");
+        newlist.push_back("\t\t\t\t<Deadband>0.0</Deadband>\r\n");
+        newlist.push_back("\t\t\t\t<Invert>0</Invert>\r\n");
+        newlist.push_back("\t\t\t</Axis>\r\n");
+    }
+    newlist.push_back("\t\t</Joystick>\r\n");
+    std::vector<std::string> new_file;
+
+    for(int i = 0; i < old_file.size(); i++)
+    {
+        if(i == line_to_insert)
+        {
+            for(int j = 0; j < newlist.size(); j++)
+            {
+                new_file.push_back(newlist.at(j));
+            }
+        }
+        new_file.push_back(old_file.at(i));
+    }
+    std::ofstream outfile;
+    outfile.open(joystickcalibrationfile_path.toStdString());
+    for(int i = 0; i < new_file.size(); i++)
+    {
+        outfile << new_file.at(i);
+    }
+    outfile.close();
+
+}
+
+

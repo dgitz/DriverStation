@@ -26,6 +26,7 @@
 #include <iostream>
 #include <linux/joystick.h>
 
+
 #define JOY_X_AXIS 0
 #define JOY_Y_AXIS 1
 #define JOY_Z_AXIS 2
@@ -99,9 +100,12 @@ private:
     UDPReceiver myUDPReceiver;
     UDPTransmitter myUDPTransmitter;
     TCPReceiver myTCPReceiver;
-    JoystickControl lookup_joystickcontrol(int v);
+    Axis lookup_joystickaxis(Joystick joy, int v);
     QString joystickcalibrationfile_path;
     bool create_emptyjoystickcalibrationfile();
+    bool lookup_joystick(QString name,Joystick& joy);
+    bool create_defaultjoystick(QString name,int numaxes);
+    std::string get_value_fromtag(std::string, std::string param);
 
 
    // QChart *ResourceChart;
@@ -113,7 +117,7 @@ private:
     QString DeviceName;
     int armdisarm_command;
     int armdisarm_state;
-    std::vector<JoystickControl> joystickcontrols;
+    Joystick joystick;
 
 
     int joy_fd;

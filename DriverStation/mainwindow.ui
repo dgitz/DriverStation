@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>664</height>
+    <width>1091</width>
+    <height>895</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="bClose">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>630</y>
+      <x>980</x>
+      <y>830</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -32,8 +32,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>761</width>
-      <height>611</height>
+      <width>961</width>
+      <height>841</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -400,9 +400,9 @@
       <property name="geometry">
        <rect>
         <x>330</x>
-        <y>210</y>
-        <width>241</width>
-        <height>361</height>
+        <y>230</y>
+        <width>601</width>
+        <height>571</height>
        </rect>
       </property>
       <property name="autoFillBackground">
@@ -417,72 +417,18 @@
          <x>0</x>
          <y>20</y>
          <width>231</width>
-         <height>341</height>
+         <height>541</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_3">
+        <property name="labelAlignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="formAlignment">
+         <set>Qt::AlignHCenter|Qt::AlignTop</set>
+        </property>
         <item row="0" column="0">
          <widget class="QLabel" name="lCalibrateOption">
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QDial" name="dCalibrateDeadband">
-          <property name="maximum">
-           <number>25</number>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="lCalibrateDeadband">
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QDial" name="dCalibrateMin">
-          <property name="minimum">
-           <number>-32768</number>
-          </property>
-          <property name="maximum">
-           <number>0</number>
-          </property>
-          <property name="value">
-           <number>-32768</number>
-          </property>
-          <property name="sliderPosition">
-           <number>-32768</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLabel" name="lCalibrateMin">
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <widget class="QDial" name="dCalibrateMax">
-          <property name="minimum">
-           <number>0</number>
-          </property>
-          <property name="maximum">
-           <number>32768</number>
-          </property>
-          <property name="value">
-           <number>32768</number>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QLabel" name="lCalibrateMax">
           <property name="text">
            <string>TextLabel</string>
           </property>
@@ -502,17 +448,97 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
+        <item row="4" column="0">
+         <widget class="QDial" name="dCalibrateMin">
+          <property name="minimum">
+           <number>-32768</number>
+          </property>
+          <property name="maximum">
+           <number>0</number>
+          </property>
+          <property name="value">
+           <number>-32768</number>
+          </property>
+          <property name="sliderPosition">
+           <number>-32768</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLabel" name="lCalibrateMin">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QDial" name="dCalibrateNeutral">
+          <property name="minimum">
+           <number>-32768</number>
+          </property>
+          <property name="maximum">
+           <number>32768</number>
+          </property>
+          <property name="value">
+           <number>32768</number>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QPushButton" name="bCalibrateCancel">
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="1">
          <widget class="QPushButton" name="bCalibrateSave">
           <property name="text">
            <string>Save</string>
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
-         <widget class="QPushButton" name="bCalibrateCancel">
+        <item row="5" column="1">
+         <widget class="QLabel" name="lCalibrateNeutral">
           <property name="text">
-           <string>Cancel</string>
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QDial" name="dCalibrateDeadband">
+          <property name="maximum">
+           <number>25</number>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QLabel" name="lCalibrateDeadband">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QDial" name="dCalibrateMax">
+          <property name="minimum">
+           <number>0</number>
+          </property>
+          <property name="maximum">
+           <number>32768</number>
+          </property>
+          <property name="value">
+           <number>32768</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLabel" name="lCalibrateMax">
+          <property name="text">
+           <string>TextLabel</string>
           </property>
          </widget>
         </item>
