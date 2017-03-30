@@ -49,6 +49,8 @@ MainWindow::MainWindow(QWidget *parent) :
    //window.show();
     ui->groupCalibrate->hide();
     messageviewer_filter = "";
+    current_axis_id = -1;
+    calibrating = false;
     myUDPTransmitter.set_RC_server(QString::fromStdString(default_ROSCORE));
 
     myUDPReceiver.Start();
@@ -109,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ioctl(joy_fd,JSIOCGNAME(80),&name);
         joy_axis = (double *)calloc(num_axes,sizeof(double));
         joy_button = (char *)calloc(num_buttons,sizeof(char));
+        current_joystickname = name;
         fcntl(joy_fd,F_SETFL,O_NONBLOCK);
         qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
         joystickcalibrationfile_path = "/home/robot/config/JoystickCalibration.xml";
@@ -138,6 +141,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     }
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+    for(int i = 0; i < joystick.axes.size(); i++)
+    {
+        switch(joystick.axes.at(i).id)
+        {
+        case JOY_X_AXIS:
+            ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        case JOY_Y_AXIS:
+            ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        case JOY_Z_AXIS:
+            ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        }
+    }
 
 
 
@@ -145,13 +163,42 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 void MainWindow::save_calibration(const bool)
 {
+    calibrating = false;
     ui->groupCalibrate->hide();
+    for(int i = 0; i < joystick.axes.size(); i++)
+    {
+        std::string axis_option = ui->lCalibrateOption->text().toStdString();
+        std::size_t found_axis = axis_option.find(joystick.axes.at(i).name.toStdString());
+        if(found_axis != std::string::npos)
+        {
+            save_axis(joystick, joystick.axes.at(i));
+        }
+    }
     ui->bXAxisCal->setEnabled(true);
     ui->bYAxisCal->setEnabled(true);
     ui->bZAxisCal->setEnabled(true);\
 }
+
+
 void MainWindow::cancel_calibration(const bool)
 {
+    calibrating = false;
+    joystick = old_joystick;
+    for(int i = 0; i < joystick.axes.size(); i++)
+    {
+        switch(joystick.axes.at(i).id)
+        {
+        case JOY_X_AXIS:
+            ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        case JOY_Y_AXIS:
+            ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        case JOY_Z_AXIS:
+            ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+            break;
+        }
+    }
     ui->groupCalibrate->hide();
     ui->bXAxisCal->setEnabled(true);
     ui->bYAxisCal->setEnabled(true);
@@ -188,11 +235,14 @@ void MainWindow::calibrate_ZAxis(bool v)
 }
 void MainWindow::calibrate_Axis(int v)
 {
+    calibrating = true;
+    old_joystick = joystick;
     ui->bXAxisCal->setEnabled(false);
     ui->bYAxisCal->setEnabled(false);
     ui->bZAxisCal->setEnabled(false);\
     Axis axis = lookup_joystickaxis(joystick,v);
     qDebug() << "id: " << QString::number(v);
+    current_axis_id = v;
     ui->lCalibrateOption->setText("Calibrating: " + axis.name);
 
     ui->dCalibrateDeadband->setValue(axis.deadband);
@@ -206,7 +256,7 @@ void MainWindow::calibrate_Axis(int v)
 
     ui->dCalibrateNeutral->setValue(axis.neutral);
     ui->lCalibrateNeutral->setText("Neutral: " + QString::number(axis.neutral));
-    ui->chbInvert->setChecked(axis.invert);
+    ui->chbCalibrateInvert->setChecked(axis.invert);
     ui->groupCalibrate->show();
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
 
@@ -215,10 +265,31 @@ void MainWindow::calibrate_Axis(int v)
 
 void MainWindow::update_CalibrationGroup()
 {
+    if(calibrating == true)
+    {
     ui->lCalibrateDeadband->setText("Deadband: " + QString::number(ui->dCalibrateDeadband->value()) + "%");
     ui->lCalibrateMax->setText("Max: " + QString::number(ui->dCalibrateMax->value()));
     ui->lCalibrateMin->setText("Min: " + QString::number(ui->dCalibrateMin->value()));
     ui->lCalibrateNeutral->setText("Neutral: " + QString::number(ui->dCalibrateNeutral->value()));
+    switch(current_axis_id)
+    {
+    case JOY_X_AXIS:
+        update_axis(JOY_X_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+        ui->XAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+        break;
+    case JOY_Y_AXIS:
+        update_axis(JOY_Y_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+        ui->YAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+        break;
+    case JOY_Z_AXIS:
+        update_axis(JOY_Z_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+        ui->ZAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+        break;
+    }
+    }
+
+
+
 }
 
 void MainWindow::update_commstatus()
@@ -429,38 +500,72 @@ void MainWindow::read_joystick()
     //qDebug() << "Axis: 0 " << joy_axis[0];
 
 }
+qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
+{
+    qint32 out = 0;
+    for(int i = 0; i < joystick.axes.size(); i++)
+    {
+        if(joystick.axes.at(i).id == axisid)
+        {
+            if(joystick.axes.at(i).invert == true)
+            {
+                invalue = -1*invalue;
+            }
+            out = (qint32)scale_value((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
+                        (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0));
+            return out;
+
+        }
+    }
+}
+double MainWindow::scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband)
+{
+    double out = 0.0;
+    if(x < (-1.0*deadband))
+    {
+        double m = (y1-neutral)/(x1-(-1.0*deadband));
+        out = m*(x-x1)+y1;
+    }
+    else if(x > deadband)
+    {
+        double m = (y2-neutral)/(x2-(deadband));
+        out = m*(x-x2)+y2;
+    }
+    else
+    {
+        out = neutral;
+    }
+    return out;
+}
+void MainWindow::update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert)
+{
+    for(int i = 0; i < joystick.axes.size();i++)
+    {
+        if(joystick.axes.at(i).id == axisid)
+        {
+            joystick.axes.at(i).max = max;
+            joystick.axes.at(i).min = min;
+            joystick.axes.at(i).neutral = neutral;
+            joystick.axes.at(i).deadband = (double)deadband;
+            joystick.axes.at(i).invert = invert;
+        }
+    }
+}
+
 void MainWindow::update_CalibrationPanel()
 {
-    if(ui->chbXAxisInvert->isChecked() == true)
-    {
-        ui->XAxis->setValue((double)(-joy_axis[JOY_X_AXIS]));
-        ui->lXAxisValue->setText("X:" + QString::number(-joy_axis[JOY_X_AXIS]));
-    }
-    else
-    {
-        ui->XAxis->setValue((double)(joy_axis[JOY_X_AXIS]));
-        ui->lXAxisValue->setText("X:" + QString::number(joy_axis[JOY_X_AXIS]));
-    }
-    if(ui->chbYAxisInvert->isChecked() == true)
-    {
-        ui->YAxis->setValue((double)(-joy_axis[JOY_Y_AXIS]));
-        ui->lYAxisValue->setText("Y:" + QString::number(-joy_axis[JOY_Y_AXIS]));
-    }
-    else
-    {
-         ui->YAxis->setValue((double)(joy_axis[JOY_Y_AXIS]));
-         ui->lYAxisValue->setText("Y:" + QString::number(joy_axis[JOY_Y_AXIS]));
-    }
-    if(ui->chbZAxisInvert->isChecked() == true)
-    {
-        ui->ZAxis->setValue((double)(-joy_axis[JOY_Z_AXIS]));
-        ui->lZAxisValue->setText("Z:" + QString::number(-joy_axis[JOY_Z_AXIS]));
-    }
-    else
-    {
-        ui->ZAxis->setValue((double)(joy_axis[JOY_Z_AXIS]));
-        ui->lZAxisValue->setText("Z:" + QString::number(joy_axis[JOY_Z_AXIS]));
-    }
+    qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
+    ui->XAxis->setValue(x_out);
+    ui->lXAxisValue->setText("X:" + QString::number(x_out));
+
+    qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
+    ui->YAxis->setValue(y_out);
+    ui->lYAxisValue->setText("Y:" + QString::number(y_out));
+
+    qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
+    ui->ZAxis->setValue(z_out);
+    ui->lZAxisValue->setText("Z:" + QString::number(z_out));
+
     ui->bJoyButton1->setDown(joy_button[JOY_BUTTON_TRIGGER]);
     ui->bJoyButton2->setDown(joy_button[JOY_BUTTON_MIDDLE]);
     ui->bJoyButton3->setDown(joy_button[JOY_BUTTON_SIDE]);
@@ -494,6 +599,23 @@ void MainWindow::update_CalibrationPanel()
         ui->bJoyPOVDown->setDown(false);
         ui->bJoyPOVUp->setDown(false);
     }
+
+    myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+                                            y_out,
+                                            z_out,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            joy_button[JOY_BUTTON_TRIGGER],
+                                            joy_button[JOY_BUTTON_MIDDLE],
+                                            joy_button[JOY_BUTTON_SIDE],
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0);
 }
 
 void MainWindow::update_devicelist()
@@ -591,6 +713,64 @@ bool MainWindow::create_emptyjoystickcalibrationfile()
     outfile << "</JoystickCalibrationFile>\r\n";
     outfile.close();
 
+}
+bool MainWindow::save_axis(Joystick joy, Axis axis)
+{
+    std::vector<std::string> old_file;
+
+    std::ifstream infile(joystickcalibrationfile_path.toStdString());
+    std::string line;
+    qint32 line_number = 0;
+    bool in_joystick = false;
+    qint32 line_to_startupdate = 0;
+    qint32 line_to_stopupdate = 0;
+    while(std::getline(infile,line))
+    {
+        old_file.push_back(line);
+        std::size_t found_joystick = line.find(joy.name.toStdString());
+        if(found_joystick != std::string::npos)
+        {
+            in_joystick = true;
+        }
+        if(in_joystick == true)
+        {
+            std::size_t axis_line = line.find(axis.name.toStdString());
+            if(axis_line != std::string::npos)
+            {
+                line_to_startupdate = line_number-1;
+                line_to_stopupdate = line_number+5;
+                in_joystick = false;
+
+            }
+        }
+        line_number++;
+    }
+    std::vector<std::string> new_file;
+    for(int i = 0; i < old_file.size(); i++)
+    {
+        if((i >= line_to_startupdate) && (i < line_to_stopupdate))
+        {
+            new_file.push_back("\t\t\t\t<ID>" + std::to_string(axis.id) + "</ID>");
+            new_file.push_back("\t\t\t\t<Name>" + axis.name.toStdString() + "</Name>");
+            new_file.push_back("\t\t\t\t<MaxValue>" + std::to_string(ui->dCalibrateMax->value()) + "</MaxValue>");
+            new_file.push_back("\t\t\t\t<MinValue>" + std::to_string(ui->dCalibrateMin->value()) + "</MinValue>");
+            new_file.push_back("\t\t\t\t<NeutralValue>" + std::to_string(ui->dCalibrateNeutral->value()) + "</NeutralValue>");
+            new_file.push_back("\t\t\t\t<Deadband>" + std::to_string(ui->dCalibrateDeadband->value()) + "</Deadband>");
+            new_file.push_back("\t\t\t\t<Invert>" + std::to_string(ui->chbCalibrateInvert->isChecked()) + "</Invert>");
+            i = line_to_stopupdate;
+        }
+        else
+        {
+            new_file.push_back(old_file.at(i));
+        }
+    }
+    std::ofstream outfile;
+    outfile.open(joystickcalibrationfile_path.toStdString());
+    for(int i = 0; i < new_file.size(); i++)
+    {
+        outfile << new_file.at(i) << "\n";
+    }
+    outfile.close();
 }
 bool MainWindow::create_defaultjoystick(QString name,int numaxes)
 {

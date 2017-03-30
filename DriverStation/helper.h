@@ -50,6 +50,8 @@ struct Axis
     qint32 max;
     bool invert;
     qint32 neutral;
+    qint32 in_value;
+    qint32 out_value;
 };
 struct Joystick
 {

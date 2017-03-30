@@ -232,19 +232,6 @@
        <item row="4" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
-          <widget class="QCheckBox" name="chbXAxisInvert">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Invert</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="lXAxisValue">
            <property name="text">
             <string>X:</string>
@@ -255,13 +242,6 @@
        </item>
        <item row="4" column="2">
         <layout class="QHBoxLayout" name="horizontalLayout_10">
-         <item>
-          <widget class="QCheckBox" name="chbYAxisInvert">
-           <property name="text">
-            <string>Invert</string>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QLabel" name="lYAxisValue">
            <property name="text">
@@ -349,13 +329,6 @@
        <item row="4" column="4">
         <layout class="QHBoxLayout" name="horizontalLayout_11">
          <item>
-          <widget class="QCheckBox" name="chbZAxisInvert">
-           <property name="text">
-            <string>Invert</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="lZAxisValue">
            <property name="text">
             <string>Z:</string>
@@ -442,7 +415,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QCheckBox" name="chbInvert">
+         <widget class="QCheckBox" name="chbCalibrateInvert">
           <property name="text">
            <string>Invert</string>
           </property>
@@ -545,17 +518,10 @@
        </layout>
       </widget>
      </widget>
-     <zorder>formLayoutWidget</zorder>
-     <zorder>gridLayoutWidget</zorder>
-     <zorder>gridLayoutWidget_2</zorder>
-     <zorder>label_5</zorder>
-     <zorder>gridLayoutWidget_4</zorder>
-     <zorder>checkBox_2</zorder>
-     <zorder>groupCalibrate</zorder>
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
-      <string>Tab 2</string>
+      <string>Operation</string>
      </attribute>
     </widget>
    </widget>

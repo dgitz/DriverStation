@@ -106,6 +106,10 @@ private:
     bool lookup_joystick(QString name,Joystick& joy);
     bool create_defaultjoystick(QString name,int numaxes);
     std::string get_value_fromtag(std::string, std::string param);
+    bool save_axis(Joystick joy, Axis axis);
+    qint32 compute_joystickoutput(int axisid, qint32 invalue);
+    double scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband);
+    void update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert);
 
 
    // QChart *ResourceChart;
@@ -117,8 +121,11 @@ private:
     QString DeviceName;
     int armdisarm_command;
     int armdisarm_state;
+    int current_axis_id;
     Joystick joystick;
-
+    Joystick old_joystick;
+    bool calibrating;
+    QString current_joystickname;
 
     int joy_fd;
     double *joy_axis;
