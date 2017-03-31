@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -523,6 +523,25 @@
      <attribute name="title">
       <string>Operation</string>
      </attribute>
+     <widget class="QPushButton" name="bArmDisarm">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>30</y>
+        <width>281</width>
+        <height>61</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <italic>true</italic>
+       </font>
+      </property>
+      <property name="text">
+       <string>DISARMED</string>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>

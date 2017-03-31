@@ -78,6 +78,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bZAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_ZAxis(bool)));
     connect(ui->bCalibrateCancel,SIGNAL(clicked(bool)),SLOT(cancel_calibration(bool)));
     connect(ui->bCalibrateSave,SIGNAL(clicked(bool)),SLOT(save_calibration(bool)));
+    connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
+
     timer_100ms->start(100);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
 
@@ -473,15 +475,16 @@ void MainWindow::update_armeddisarmed_text(int value)
 {
     armdisarm_state = value;
     QString tempstr;
-     switch (value)
-     {
-        case ARMEDSTATUS_ARMED: tempstr = "ARMED"; break;
-         case ARMEDSTATUS_ARMING: tempstr = "ARMING"; break;
-         case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; break;
-         case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMING\nCANNOT ARM"; break;
-         case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
-         case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED";
-     }
+    switch (value)
+    {
+    case ARMEDSTATUS_ARMED: tempstr = "ARMED"; break;
+    case ARMEDSTATUS_ARMING: tempstr = "ARMING"; break;
+    case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; break;
+    case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMING\nCANNOT ARM"; break;
+    case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
+    case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED";
+    }
+    ui->bArmDisarm->setText(tempstr);
 }
 void MainWindow::read_joystick()
 {
