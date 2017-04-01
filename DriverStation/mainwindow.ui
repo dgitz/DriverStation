@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1091</width>
-    <height>895</height>
+    <width>1366</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="bClose">
     <property name="geometry">
      <rect>
-      <x>980</x>
-      <y>830</y>
+      <x>410</x>
+      <y>620</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -33,11 +33,11 @@
       <x>10</x>
       <y>10</y>
       <width>961</width>
-      <height>841</height>
+      <height>600</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -372,9 +372,9 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>230</y>
-        <width>601</width>
+        <x>640</x>
+        <y>20</y>
+        <width>251</width>
         <height>571</height>
        </rect>
       </property>
@@ -539,7 +539,7 @@
        </font>
       </property>
       <property name="text">
-       <string>DISARMED</string>
+       <string>UNDEFINED</string>
       </property>
      </widget>
     </widget>

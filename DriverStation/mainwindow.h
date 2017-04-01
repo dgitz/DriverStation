@@ -35,6 +35,8 @@
 #define JOY_BUTTON_TRIGGER 0
 #define JOY_BUTTON_MIDDLE 1
 #define JOY_BUTTON_SIDE 3
+#define CALIBRATION_TAB 0
+#define OPERATION_TAB 1
 
 using namespace QtCharts;
 namespace Ui {
@@ -73,11 +75,13 @@ public slots:
     void send_Arm_Command_message(int);
     void send_Heartbeat_message();
     void bArmDisarm_pressed();
+    void tabChanged();
     void b1_pressed();
     void b2_pressed();
     void b3_pressed();
     void b4_pressed();
     void update_CalibrationPanel();
+    void update_OperationPanel();
     void update_CalibrationGroup();
     void calibrate_Axis(const int);
     void calibrate_XAxis(const bool);
@@ -126,6 +130,7 @@ private:
     Joystick old_joystick;
     bool calibrating;
     QString current_joystickname;
+    int last_joy_sidebutton;
 
     int joy_fd;
     double *joy_axis;

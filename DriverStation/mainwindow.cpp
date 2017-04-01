@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&myTCPReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
     timer_10ms->start(10);
-
+    connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged()));
     QTimer *timer_100ms = new QTimer(this);
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(send_Heartbeat_message()));
@@ -79,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bCalibrateCancel,SIGNAL(clicked(bool)),SLOT(cancel_calibration(bool)));
     connect(ui->bCalibrateSave,SIGNAL(clicked(bool)),SLOT(save_calibration(bool)));
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
+
 
     timer_100ms->start(100);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
@@ -142,7 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
 
     }
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+
     for(int i = 0; i < joystick.axes.size(); i++)
     {
         switch(joystick.axes.at(i).id)
@@ -158,11 +159,30 @@ MainWindow::MainWindow(QWidget *parent) :
             break;
         }
     }
-
+    ui->tabWidget->setCurrentIndex(OPERATION_TAB);
+    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+    last_joy_sidebutton = 0;
 
 
 
 }
+void MainWindow::tabChanged()
+{
+    if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
+    {
+        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+    }
+    else if(ui->tabWidget->currentIndex() == OPERATION_TAB)
+    {
+        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+
+    }
+}
+
 void MainWindow::save_calibration(const bool)
 {
     calibrating = false;
@@ -260,7 +280,6 @@ void MainWindow::calibrate_Axis(int v)
     ui->lCalibrateNeutral->setText("Neutral: " + QString::number(axis.neutral));
     ui->chbCalibrateInvert->setChecked(axis.invert);
     ui->groupCalibrate->show();
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
 
 
 }
@@ -388,9 +407,15 @@ void MainWindow::bRTH_pressed()
 }
 void MainWindow::bArmDisarm_pressed()
 {
-    if(armdisarm_command == ROVERCOMMAND_DISARM) { armdisarm_command = ROVERCOMMAND_ARM; }
-    else { armdisarm_command = ROVERCOMMAND_DISARM; }
-    send_Arm_Command_message(armdisarm_command);
+    if((armdisarm_state == ARMEDSTATUS_ARMED) ||
+       (armdisarm_state == ARMEDSTATUS_ARMING) ||
+       (armdisarm_state == ARMEDSTATUS_DISARMED) ||
+       (armdisarm_state == ARMEDSTATUS_DISARMING))
+    {
+        if(armdisarm_command == ROVERCOMMAND_DISARM) { armdisarm_command = ROVERCOMMAND_ARM; }
+        else { armdisarm_command = ROVERCOMMAND_DISARM; }
+        send_Arm_Command_message(armdisarm_command);
+    }
 }
 
 void MainWindow::b1_pressed()
@@ -500,7 +525,25 @@ void MainWindow::read_joystick()
             joy_button[js.number] = js.value;
             break;
     }
-    //qDebug() << "Axis: 0 " << joy_axis[0];
+    //Read ArmDisarm Button
+    if((last_joy_sidebutton == 0) && (joy_button[JOY_BUTTON_SIDE] == 1))
+    {
+        last_joy_sidebutton = 1;
+        if((armdisarm_state == ARMEDSTATUS_ARMED) ||
+           (armdisarm_state == ARMEDSTATUS_ARMING) ||
+           (armdisarm_state == ARMEDSTATUS_DISARMED) ||
+           (armdisarm_state == ARMEDSTATUS_DISARMING))
+        {
+            if(armdisarm_command == ROVERCOMMAND_DISARM) { armdisarm_command = ROVERCOMMAND_ARM; }
+            else { armdisarm_command = ROVERCOMMAND_DISARM; }
+            send_Arm_Command_message(armdisarm_command);
+        }
+    }
+    else if((last_joy_sidebutton == 1) && (joy_button[JOY_BUTTON_SIDE] == 0))
+    {
+        last_joy_sidebutton = 0;
+    }
+
 
 }
 qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
@@ -553,6 +596,37 @@ void MainWindow::update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int
             joystick.axes.at(i).invert = invert;
         }
     }
+}
+void MainWindow::update_OperationPanel()
+{
+    qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
+    ui->XAxis->setValue(x_out);
+    ui->lXAxisValue->setText("X:" + QString::number(x_out));
+
+    qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
+    ui->YAxis->setValue(y_out);
+    ui->lYAxisValue->setText("Y:" + QString::number(y_out));
+
+    qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
+    ui->ZAxis->setValue(z_out);
+    ui->lZAxisValue->setText("Z:" + QString::number(z_out));
+
+    myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+                                            y_out,
+                                            z_out,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            joy_button[JOY_BUTTON_TRIGGER],
+                                            joy_button[JOY_BUTTON_MIDDLE],
+                                            joy_button[JOY_BUTTON_SIDE],
+                                            0,
+                                            0,
+                                            0,
+                                            0,
+                                            0);
 }
 
 void MainWindow::update_CalibrationPanel()
