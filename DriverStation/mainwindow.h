@@ -89,6 +89,7 @@ public slots:
     void calibrate_ZAxis(const bool);
     void save_calibration(const bool);
     void cancel_calibration(const bool);
+    void check_network();
 
     void bRTH_pressed();
 
@@ -114,6 +115,15 @@ private:
     qint32 compute_joystickoutput(int axisid, qint32 invalue);
     double scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband);
     void update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert);
+    std::string ROS_Server_IPAddress;
+    int ROSServer_Active;
+    int ROSServer_Timeout;
+    std::string Router_IPAddress;
+    int Router_Active;
+    int Router_Timeout;
+    std::string Rover_IPAddress;
+    int Rover_Active;
+    int Rover_Timeout;
 
 
    // QChart *ResourceChart;
@@ -136,6 +146,10 @@ private:
     double *joy_axis;
     char *joy_button;
     QTimer *timer_10ms;
+    QTimer *timer_100ms;
+    QTimer *timer_1000ms;
+
+    //QLabel iRouterActive;
 
 };
 

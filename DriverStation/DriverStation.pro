@@ -38,5 +38,17 @@ CONFIG += mobility
 MOBILITY = 
 
 DISTFILES += \
-    DriverStation.pro.user
+    DriverStation.pro.user \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSSERVER_Active.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSSERVER_Unactive.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Active.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Unactive.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Active.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Unactive.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_1.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_2.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_3.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_4.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_5.png
 

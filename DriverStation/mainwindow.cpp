@@ -5,7 +5,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    std::string default_ROSCORE = "10.0.0.111";
+    ROS_Server_IPAddress = "10.0.0.111";
+    Router_IPAddress = "10.0.0.3";
+    Rover_IPAddress = "10.0.0.2";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -51,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
-    myUDPTransmitter.set_RC_server(QString::fromStdString(default_ROSCORE));
+    myUDPTransmitter.set_RC_server(QString::fromStdString(ROS_Server_IPAddress));
 
     myUDPReceiver.Start();
     myTCPReceiver.Start();
@@ -62,15 +64,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
     timer_10ms = new QTimer(this);
+    timer_100ms = new QTimer(this);
+    timer_1000ms = new QTimer(this);
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_commstatus()));
 
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
 
     connect(&myTCPReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
-    timer_10ms->start(10);
+
+
     connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged()));
-    QTimer *timer_100ms = new QTimer(this);
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(send_Heartbeat_message()));
     connect(ui->bXAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_XAxis(bool)));
@@ -80,8 +84,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bCalibrateSave,SIGNAL(clicked(bool)),SLOT(save_calibration(bool)));
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
 
-
+    timer_10ms->start(10);
     timer_100ms->start(100);
+    timer_1000ms->start(1000);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
 
 
@@ -90,6 +95,9 @@ MainWindow::MainWindow(QWidget *parent) :
     joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
     if(joy_fd < 0)
     {
+        QMessageBox::information(this,
+                                 tr("Driver Station"),
+                                 tr("Joystick Not Found. Exiting."));
         qDebug() << "Couldn't open joystick. Exiting.";
         kill_application(true);
     }
@@ -159,13 +167,140 @@ MainWindow::MainWindow(QWidget *parent) :
             break;
         }
     }
+    {
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Unactive.png");
+        ui->iRouterActive->setPixmap(pixmap);
+        ui->iRouterActive->setMask(pixmap.mask());
+        ui->iRouterActive->show();
+        Router_Active = 0;
+        Router_Timeout = 0;
+    }
+    {
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Unactive.png");
+        ui->iROSServerActive->setPixmap(pixmap);
+        ui->iROSServerActive->setMask(pixmap.mask());
+        ui->iROSServerActive->show();
+        ROSServer_Active = 0;
+        ROSServer_Timeout = 0;
+    }
+    {
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Unactive.png");
+        ui->iRoverActive->setPixmap(pixmap);
+        ui->iRoverActive->setMask(pixmap.mask());
+        ui->iRoverActive->show();
+        Rover_Active = 0;
+        Rover_Timeout = 0;
+    }
+
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+    connect(timer_1000ms,SIGNAL(timeout()),this,SLOT(check_network()));
     last_joy_sidebutton = 0;
 
 
 
 }
+void MainWindow::check_network()
+{
+    {
+        if((Router_Active == 1) || (Router_Timeout > 10))
+        {
+            Router_Timeout = 0;
+            QProcess *connected = new QProcess(0);
+            QString exec="ping";
+            QStringList params;
+            params << "-c" << "1" << QString::fromStdString(Router_IPAddress);
+            QElapsedTimer timer;
+            timer.start();
+            connected->start(exec,params);
+            if(!connected->waitForFinished())
+                return;
+            if(connected->exitCode() == 0) // ping successful
+            {
+                Router_Active = 1;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Active.png");
+                ui->iRouterActive->setPixmap(pixmap);
+            }
+            else // ping unsuccessful
+            {
+                Router_Active = 0;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Unactive.png");
+                ui->iRouterActive->setPixmap(pixmap);
+            }
+            delete connected;
+        }
+        else
+        {
+            Router_Timeout++;
+        }
+    }
+    {
+        if((ROSServer_Active == 1) || (ROSServer_Timeout > 10))
+        {
+            ROSServer_Timeout = 0;
+            QProcess *connected = new QProcess(0);
+            QString exec="ping";
+            QStringList params;
+            params << "-c" << "1" << QString::fromStdString(ROS_Server_IPAddress);
+            QElapsedTimer timer;
+            timer.start();
+            connected->start(exec,params);
+            if(!connected->waitForFinished())
+                return;
+            if(connected->exitCode() == 0) // ping successful
+            {
+                ROSServer_Active = 1;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Active.png");
+                ui->iROSServerActive->setPixmap(pixmap);
+            }
+            else // ping unsuccessful
+            {
+                ROSServer_Active = 0;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Unactive.png");
+                ui->iROSServerActive->setPixmap(pixmap);
+            }
+            delete connected;
+        }
+        else
+        {
+            ROSServer_Timeout++;
+        }
+    }
+
+    {
+        if((Rover_Active == 1) || (Rover_Timeout > 10))
+        {
+            Rover_Timeout = 0;
+            QProcess *connected = new QProcess(0);
+            QString exec="ping";
+            QStringList params;
+            params << "-c" << "1" << QString::fromStdString(Rover_IPAddress);
+            QElapsedTimer timer;
+            timer.start();
+            connected->start(exec,params);
+            if(!connected->waitForFinished())
+                return;
+            if(connected->exitCode() == 0) // ping successful
+            {
+                Rover_Active = 1;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Active.png");
+                ui->iRoverActive->setPixmap(pixmap);
+            }
+            else // ping unsuccessful
+            {
+                Rover_Active = 0;
+                QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Unactive.png");
+                ui->iRoverActive->setPixmap(pixmap);
+            }
+            delete connected;
+        }
+        else
+        {
+            Rover_Timeout++;
+        }
+    }
+}
+
 void MainWindow::tabChanged()
 {
     if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
