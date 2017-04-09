@@ -212,33 +212,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 }
-int MainWindow::convert_pingms_tossi(int v)
-{
-    if(v < 15)
-    {
-        return 5;
-    }
-    else if((v >= 15) && ( v < 100))
-    {
-        return 4;
-    }
-    else if((v >= 100) && ( v < 250))
-    {
-        return 3;
-    }
-    else if((v >= 250) && ( v < 350))
-    {
-        return 2;
-    }
-    else if((v >= 350) && ( v < 500))
-    {
-        return 1;
-    }
-    else
-    {
-        return 0;
-    }
-}
+
 
 void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
 {
@@ -1077,5 +1051,31 @@ bool MainWindow::create_defaultjoystick(QString name,int numaxes)
     outfile.close();
 
 }
-
+int MainWindow::convert_pingms_tossi(int v)
+{
+    if(v < 15)
+    {
+        return 5;
+    }
+    else if((v >= 15) && ( v < 100))
+    {
+        return 4;
+    }
+    else if((v >= 100) && ( v < 250))
+    {
+        return 3;
+    }
+    else if((v >= 250) && ( v < 350))
+    {
+        return 2;
+    }
+    else if((v >= 350) && ( v < 500))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 
