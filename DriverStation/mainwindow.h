@@ -91,6 +91,9 @@ public slots:
     void cancel_calibration(const bool);
     void check_network();
 
+    void check_ROSServer_finished(int code, QProcess::ExitStatus status);
+    void check_DSRouter_finished(int code, QProcess::ExitStatus status);
+    void check_Rover_finished(int code, QProcess::ExitStatus status);
     void bRTH_pressed();
 
     void update_imageview(QPixmap);
@@ -115,15 +118,13 @@ private:
     qint32 compute_joystickoutput(int axisid, qint32 invalue);
     double scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband);
     void update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert);
+    int convert_pingms_tossi(int v);
     std::string ROS_Server_IPAddress;
     int ROSServer_Active;
-    int ROSServer_Timeout;
-    std::string Router_IPAddress;
-    int Router_Active;
-    int Router_Timeout;
+    std::string DSRouter_IPAddress;
+    int DSRouter_Active;
     std::string Rover_IPAddress;
     int Rover_Active;
-    int Rover_Timeout;
 
 
    // QChart *ResourceChart;
@@ -148,6 +149,11 @@ private:
     QTimer *timer_10ms;
     QTimer *timer_100ms;
     QTimer *timer_1000ms;
+    QTimer *timer_5000ms;
+
+    QTime ROSServer_pingtimer;
+    QTime Rover_pingtimer;
+    QTime DSRouter_timer;
 
     //QLabel iRouterActive;
 
