@@ -61,13 +61,21 @@ UDPReceiver::UDPReceiver(QWidget *parent)
 }
 void UDPReceiver::Start()
 {
+
     groupAddress = QHostAddress("239.255.43.21");
     udpSocket = new QUdpSocket(this);
+
     udpSocket->bind(QHostAddress::AnyIPv4, 45454, QUdpSocket::ShareAddress);
-    udpSocket->joinMulticastGroup(groupAddress);
+    QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
+    foreach (QNetworkInterface iface, list)
+    {
+         udpSocket->joinMulticastGroup(groupAddress,iface);
+    }
+
 
     connect(udpSocket, SIGNAL(readyRead()),
             this, SLOT(processPendingDatagrams()));
+    qDebug() << "Open: " << udpSocket->isOpen() << " Valid: " << udpSocket->isValid();
 }
 
 void UDPReceiver::processPendingDatagrams()
@@ -79,8 +87,10 @@ void UDPReceiver::processPendingDatagrams()
         udpSocket->readDatagram(datagram.data(), datagram.size());
         QList<QByteArray> items = datagram.split(',');
         int message_id = items.at(0).toInt();
+        //qDebug() << "Got: " << message_id;
         switch(message_id)
         {
+
             case ARM_STATUS_ID:
             {
 

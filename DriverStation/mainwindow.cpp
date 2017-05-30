@@ -494,7 +494,6 @@ void MainWindow::update_commstatus()
     qint64 time_sincelastcomm = myUDPReceiver.get_lastcomm();
     if(time_sincelastcomm > 5000)// mS
     {
-        qDebug() << "Timeout";
         armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
         armdisarm_command = ROVERCOMMAND_DISARM;
     }
@@ -954,7 +953,11 @@ void MainWindow::update_devicelistviewer()
 }
 void MainWindow::update_messageviewer(const Diagnostic &diag)
 {
-
+    if(diag.Level > INFO)
+    {
+        QString tempstr = QTime::currentTime().toString() + " " + QString::fromStdString(diag.Description);
+        ui->tInfo->append(tempstr);
+    }
 }
 
 std::string MainWindow::get_level_string(int value)
