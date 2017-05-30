@@ -22,7 +22,7 @@ SOURCES += main.cpp\
     udptransmitter.cpp \
     tcptransmitter.cpp \
     tcpreceiver.cpp \
-    ipmessage.cpp
+    udpmessage.cpp
 
 HEADERS  += mainwindow.h \
     helper.h \
@@ -30,7 +30,7 @@ HEADERS  += mainwindow.h \
     udpreceiver.h \
     tcpreceiver.h \
     tcptransmitter.h \
-    ipmessage.h
+    udpmessage.h
 
 FORMS    += mainwindow.ui
 

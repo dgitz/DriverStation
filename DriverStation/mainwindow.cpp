@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ROS_Server_IPAddress = "10.0.0.111";
     DSRouter_IPAddress = "10.0.0.3";
+    joystick_available = false;
     Rover_IPAddress = "10.0.0.109";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
@@ -45,15 +46,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
 
-   //QMainWindow window;
-  // window.setCentralWidget(ResourceChartView);
-   //window.resize(400,300);
-   //window.show();
+    //QMainWindow window;
+    // window.setCentralWidget(ResourceChartView);
+    //window.resize(400,300);
+    //window.show();
     ui->groupCalibrate->hide();
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
-    myUDPTransmitter.set_RC_server(QString::fromStdString(ROS_Server_IPAddress));
+    myUDPTransmitter.set_RC_server(QString::fromStdString(Rover_IPAddress));
 
     myUDPReceiver.Start();
     myTCPReceiver.Start();
@@ -101,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                  tr("Driver Station"),
                                  tr("Joystick Not Found. Exiting."));
         qDebug() << "Couldn't open joystick. Exiting.";
-        kill_application(true);
+        //kill_application(true);
     }
     else
     {
@@ -118,55 +119,63 @@ MainWindow::MainWindow(QWidget *parent) :
         ioctl(joy_fd,JSIOCGBUTTONS,&num_buttons);
         if((num_axes == 0) || (num_buttons == 0))
         {
-            qDebug() << "Couldn't read joystick. Exiting.";
-            kill_application(true);
-        }
-        ioctl(joy_fd,JSIOCGNAME(80),&name);
-        joy_axis = (double *)calloc(num_axes,sizeof(double));
-        joy_button = (char *)calloc(num_buttons,sizeof(char));
-        current_joystickname = name;
-        fcntl(joy_fd,F_SETFL,O_NONBLOCK);
-        qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
-        joystickcalibrationfile_path = "/home/robot/config/JoystickCalibration.xml";
-        QFileInfo check_file(joystickcalibrationfile_path);
-        if(check_file.exists() && check_file.isFile())
-        {
-            qDebug() << "Found joystick calibration file";
+            qDebug() << "Couldn't read joystick.";
+            joystick_available = false;
+            //kill_application(true);
         }
         else
         {
-            qDebug() << "Couldn't find joystick calibration file, creating new one.";
-            create_emptyjoystickcalibrationfile();
+            joystick_available = true;
+            ioctl(joy_fd,JSIOCGNAME(80),&name);
+            joy_axis = (double *)calloc(num_axes,sizeof(double));
+            joy_button = (char *)calloc(num_buttons,sizeof(char));
+            current_joystickname = name;
+            fcntl(joy_fd,F_SETFL,O_NONBLOCK);
+            qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
+            joystickcalibrationfile_path = "/home/robot/config/JoystickCalibration.xml";
+            QFileInfo check_file(joystickcalibrationfile_path);
+            if(check_file.exists() && check_file.isFile())
+            {
+                qDebug() << "Found joystick calibration file";
+            }
+            else
+            {
+                qDebug() << "Couldn't find joystick calibration file, creating new one.";
+                create_emptyjoystickcalibrationfile();
+            }
+            Joystick joy;
+            bool found = lookup_joystick(name,joy);
+            if(found == true)
+            {
+                qDebug() << "Found Joystick: " << QString::fromStdString(name) << " in Cal File";
+                joystick = joy;
+            }
+            else
+            {
+                qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
+                bool create = create_defaultjoystick(name,num_axes);
+            }
+            connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
         }
-        Joystick joy;
-        bool found = lookup_joystick(name,joy);
-        if(found == true)
-        {
-            qDebug() << "Found Joystick: " << QString::fromStdString(name) << " in Cal File";
-            joystick = joy;
-        }
-        else
-        {
-            qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
-            bool create = create_defaultjoystick(name,num_axes);
-        }
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
+
 
     }
-
-    for(int i = 0; i < joystick.axes.size(); i++)
+    if(joystick_available == true)
     {
-        switch(joystick.axes.at(i).id)
+        for(int i = 0; i < joystick.axes.size(); i++)
         {
-        case JOY_X_AXIS:
-            ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
-        case JOY_Y_AXIS:
-            ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
-        case JOY_Z_AXIS:
-            ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
+            switch(joystick.axes.at(i).id)
+            {
+            case JOY_X_AXIS:
+                ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            case JOY_Y_AXIS:
+                ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            case JOY_Z_AXIS:
+                ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            }
         }
     }
     {
@@ -191,16 +200,16 @@ MainWindow::MainWindow(QWidget *parent) :
         Rover_Active = 0;
     }
     {
-       QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png");
-       ui->iRouterSignal->setPixmap(pixmap);
-       ui->iRouterSignal->setMask(pixmap.mask());
-       ui->iRouterSignal->show();
-       ui->iROSSignal->setPixmap(pixmap);
-       ui->iROSSignal->setMask(pixmap.mask());
-       ui->iROSSignal->show();
-       ui->iRoverSignal->setPixmap(pixmap);
-       ui->iRoverSignal->setMask(pixmap.mask());
-       ui->iRoverSignal->show();
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png");
+        ui->iRouterSignal->setPixmap(pixmap);
+        ui->iRouterSignal->setMask(pixmap.mask());
+        ui->iRouterSignal->show();
+        ui->iROSSignal->setPixmap(pixmap);
+        ui->iROSSignal->setMask(pixmap.mask());
+        ui->iROSSignal->show();
+        ui->iRoverSignal->setPixmap(pixmap);
+        ui->iRoverSignal->setMask(pixmap.mask());
+        ui->iRoverSignal->show();
     }
 
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
@@ -264,7 +273,6 @@ void MainWindow::check_Rover_finished(int code, QProcess::ExitStatus status)
         Rover_Active = 1;
         QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Active.png");
         ui->iRoverActive->setPixmap(pixmap);
-        qDebug() << Rover_pingtimer.elapsed();
         QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_" + QString::number(convert_pingms_tossi(Rover_pingtimer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
         ui->iRoverSignal->setPixmap(pixmap2);
@@ -331,46 +339,53 @@ void MainWindow::tabChanged()
 
 void MainWindow::save_calibration(const bool)
 {
-    calibrating = false;
-    ui->groupCalibrate->hide();
-    for(int i = 0; i < joystick.axes.size(); i++)
+    if(joystick_available == true)
     {
-        std::string axis_option = ui->lCalibrateOption->text().toStdString();
-        std::size_t found_axis = axis_option.find(joystick.axes.at(i).name.toStdString());
-        if(found_axis != std::string::npos)
+        calibrating = false;
+        ui->groupCalibrate->hide();
+        for(int i = 0; i < joystick.axes.size(); i++)
         {
-            save_axis(joystick, joystick.axes.at(i));
+            std::string axis_option = ui->lCalibrateOption->text().toStdString();
+            std::size_t found_axis = axis_option.find(joystick.axes.at(i).name.toStdString());
+            if(found_axis != std::string::npos)
+            {
+                save_axis(joystick, joystick.axes.at(i));
+            }
         }
+        ui->bXAxisCal->setEnabled(true);
+        ui->bYAxisCal->setEnabled(true);
+        ui->bZAxisCal->setEnabled(true);\
     }
-    ui->bXAxisCal->setEnabled(true);
-    ui->bYAxisCal->setEnabled(true);
-    ui->bZAxisCal->setEnabled(true);\
+
 }
 
 
 void MainWindow::cancel_calibration(const bool)
 {
-    calibrating = false;
-    joystick = old_joystick;
-    for(int i = 0; i < joystick.axes.size(); i++)
+    if(joystick_available == true)
     {
-        switch(joystick.axes.at(i).id)
+        calibrating = false;
+        joystick = old_joystick;
+        for(int i = 0; i < joystick.axes.size(); i++)
         {
-        case JOY_X_AXIS:
-            ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
-        case JOY_Y_AXIS:
-            ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
-        case JOY_Z_AXIS:
-            ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
-            break;
+            switch(joystick.axes.at(i).id)
+            {
+            case JOY_X_AXIS:
+                ui->XAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            case JOY_Y_AXIS:
+                ui->YAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            case JOY_Z_AXIS:
+                ui->ZAxis->setRange(joystick.axes.at(i).min,joystick.axes.at(i).max);
+                break;
+            }
         }
+        ui->groupCalibrate->hide();
+        ui->bXAxisCal->setEnabled(true);
+        ui->bYAxisCal->setEnabled(true);
+        ui->bZAxisCal->setEnabled(true);\
     }
-    ui->groupCalibrate->hide();
-    ui->bXAxisCal->setEnabled(true);
-    ui->bYAxisCal->setEnabled(true);
-    ui->bZAxisCal->setEnabled(true);\
 }
 
 void MainWindow::update_imageview(QPixmap pic)
@@ -391,68 +406,83 @@ void MainWindow::check_set_allcontrols_todefault()
 }
 void MainWindow::calibrate_XAxis(bool v)
 {
-    calibrate_Axis(JOY_X_AXIS);
+    if(joystick_available == true)
+    {
+        calibrate_Axis(JOY_X_AXIS);
+    }
 }
 void MainWindow::calibrate_YAxis(bool v)
 {
-    calibrate_Axis(JOY_Y_AXIS);
+    if(joystick_available == true)
+    {
+        calibrate_Axis(JOY_Y_AXIS);
+    }
 }
 void MainWindow::calibrate_ZAxis(bool v)
 {
-    calibrate_Axis(JOY_Z_AXIS);
+    if(joystick_available == true)
+    {
+        calibrate_Axis(JOY_Z_AXIS);
+    }
 }
 void MainWindow::calibrate_Axis(int v)
 {
-    calibrating = true;
-    old_joystick = joystick;
-    ui->bXAxisCal->setEnabled(false);
-    ui->bYAxisCal->setEnabled(false);
-    ui->bZAxisCal->setEnabled(false);\
-    Axis axis = lookup_joystickaxis(joystick,v);
-    qDebug() << "id: " << QString::number(v);
-    current_axis_id = v;
-    ui->lCalibrateOption->setText("Calibrating: " + axis.name);
+    if(joystick_available == true)
+    {
+        calibrating = true;
+        old_joystick = joystick;
+        ui->bXAxisCal->setEnabled(false);
+        ui->bYAxisCal->setEnabled(false);
+        ui->bZAxisCal->setEnabled(false);\
+        Axis axis = lookup_joystickaxis(joystick,v);
+        qDebug() << "id: " << QString::number(v);
+        current_axis_id = v;
+        ui->lCalibrateOption->setText("Calibrating: " + axis.name);
 
-    ui->dCalibrateDeadband->setValue(axis.deadband);
-    ui->lCalibrateDeadband->setText("Deadband: " + QString::number(axis.deadband) + "%");
+        ui->dCalibrateDeadband->setValue(axis.deadband);
+        ui->lCalibrateDeadband->setText("Deadband: " + QString::number(axis.deadband) + "%");
 
-    ui->dCalibrateMax->setValue(axis.max);
-    ui->lCalibrateMax->setText("Max: " + QString::number(axis.max));
+        ui->dCalibrateMax->setValue(axis.max);
+        ui->lCalibrateMax->setText("Max: " + QString::number(axis.max));
 
-    ui->dCalibrateMin->setValue(axis.min);
-    ui->lCalibrateMin->setText("Min: " + QString::number(axis.min));
+        ui->dCalibrateMin->setValue(axis.min);
+        ui->lCalibrateMin->setText("Min: " + QString::number(axis.min));
 
-    ui->dCalibrateNeutral->setValue(axis.neutral);
-    ui->lCalibrateNeutral->setText("Neutral: " + QString::number(axis.neutral));
-    ui->chbCalibrateInvert->setChecked(axis.invert);
-    ui->groupCalibrate->show();
+        ui->dCalibrateNeutral->setValue(axis.neutral);
+        ui->lCalibrateNeutral->setText("Neutral: " + QString::number(axis.neutral));
+        ui->chbCalibrateInvert->setChecked(axis.invert);
+        ui->groupCalibrate->show();
+    }
 
 
 }
 
 void MainWindow::update_CalibrationGroup()
 {
-    if(calibrating == true)
+    if(joystick_available == true)
     {
-    ui->lCalibrateDeadband->setText("Deadband: " + QString::number(ui->dCalibrateDeadband->value()) + "%");
-    ui->lCalibrateMax->setText("Max: " + QString::number(ui->dCalibrateMax->value()));
-    ui->lCalibrateMin->setText("Min: " + QString::number(ui->dCalibrateMin->value()));
-    ui->lCalibrateNeutral->setText("Neutral: " + QString::number(ui->dCalibrateNeutral->value()));
-    switch(current_axis_id)
-    {
-    case JOY_X_AXIS:
-        update_axis(JOY_X_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
-        ui->XAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
-        break;
-    case JOY_Y_AXIS:
-        update_axis(JOY_Y_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
-        ui->YAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
-        break;
-    case JOY_Z_AXIS:
-        update_axis(JOY_Z_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
-        ui->ZAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
-        break;
-    }
+        if(calibrating == true)
+        {
+            ui->lCalibrateDeadband->setText("Deadband: " + QString::number(ui->dCalibrateDeadband->value()) + "%");
+            ui->lCalibrateMax->setText("Max: " + QString::number(ui->dCalibrateMax->value()));
+            ui->lCalibrateMin->setText("Min: " + QString::number(ui->dCalibrateMin->value()));
+            ui->lCalibrateNeutral->setText("Neutral: " + QString::number(ui->dCalibrateNeutral->value()));
+            switch(current_axis_id)
+            {
+            case JOY_X_AXIS:
+                update_axis(JOY_X_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+                ui->XAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+                break;
+            case JOY_Y_AXIS:
+                update_axis(JOY_Y_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+                ui->YAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+                break;
+            case JOY_Z_AXIS:
+                update_axis(JOY_Z_AXIS,ui->dCalibrateNeutral->value(),ui->dCalibrateMax->value(),ui->dCalibrateMin->value(),ui->dCalibrateDeadband->value(),ui->chbCalibrateInvert->isChecked());
+                ui->ZAxis->setRange(ui->dCalibrateMin->value(),ui->dCalibrateMax->value());
+                break;
+            }
+        }
     }
 
 
@@ -462,8 +492,9 @@ void MainWindow::update_CalibrationGroup()
 void MainWindow::update_commstatus()
 {
     qint64 time_sincelastcomm = myUDPReceiver.get_lastcomm();
-    if(time_sincelastcomm > 500)// mS
+    if(time_sincelastcomm > 5000)// mS
     {
+        qDebug() << "Timeout";
         armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
         armdisarm_command = ROVERCOMMAND_DISARM;
     }
@@ -471,54 +502,57 @@ void MainWindow::update_commstatus()
 }
 bool MainWindow::lookup_joystick(QString name,Joystick& joy)
 {
-    std::ifstream infile(joystickcalibrationfile_path.toStdString());
-    std::string line;
-    while(std::getline(infile,line))
+    if(joystick_available == true)
     {
-        std::size_t found_joy = line.find("<Joystick>");
-        if(found_joy != std::string::npos)
+        std::ifstream infile(joystickcalibrationfile_path.toStdString());
+        std::string line;
+        while(std::getline(infile,line))
         {
-            std::getline(infile,line);
-            std::size_t found_name = line.find(name.toStdString());
-            if(found_name != std::string::npos)
+            std::size_t found_joy = line.find("<Joystick>");
+            if(found_joy != std::string::npos)
             {
-                joy.name = name;
                 std::getline(infile,line);
-                int num_axes = std::stoi(get_value_fromtag(line,"AxisCount"));
-                int axis_count_found = 0;
-
-                while(axis_count_found < num_axes)
+                std::size_t found_name = line.find(name.toStdString());
+                if(found_name != std::string::npos)
                 {
+                    joy.name = name;
                     std::getline(infile,line);
-                    std::size_t found_newaxis = line.find("<Axis>");
-                    if(found_newaxis != std::string::npos)
-                    {
-                        axis_count_found++;
+                    int num_axes = std::stoi(get_value_fromtag(line,"AxisCount"));
+                    int axis_count_found = 0;
 
-                    }
-                    if(axis_count_found > 0)
+                    while(axis_count_found < num_axes)
                     {
-                        Axis axis;
                         std::getline(infile,line);
-                        axis.id = std::stoi(get_value_fromtag(line,"ID"));
-                        std::getline(infile,line);
-                        axis.name = QString::fromStdString(get_value_fromtag(line,"Name"));
-                        std::getline(infile,line);
-                        axis.max = std::stoi(get_value_fromtag(line,"MaxValue"));
-                        std::getline(infile,line);
-                        axis.min = std::stoi(get_value_fromtag(line,"MinValue"));
-                        std::getline(infile,line);
-                        axis.neutral = std::stoi(get_value_fromtag(line,"NeutralValue"));
-                        std::getline(infile,line);
-                        axis.deadband = std::stod(get_value_fromtag(line,"Deadband"));
-                        std::getline(infile,line);
-                        axis.invert = std::stoi(get_value_fromtag(line,"Invert"));
-                        joy.axes.push_back(axis);
-                        std::getline(infile,line);
+                        std::size_t found_newaxis = line.find("<Axis>");
+                        if(found_newaxis != std::string::npos)
+                        {
+                            axis_count_found++;
+
+                        }
+                        if(axis_count_found > 0)
+                        {
+                            Axis axis;
+                            std::getline(infile,line);
+                            axis.id = std::stoi(get_value_fromtag(line,"ID"));
+                            std::getline(infile,line);
+                            axis.name = QString::fromStdString(get_value_fromtag(line,"Name"));
+                            std::getline(infile,line);
+                            axis.max = std::stoi(get_value_fromtag(line,"MaxValue"));
+                            std::getline(infile,line);
+                            axis.min = std::stoi(get_value_fromtag(line,"MinValue"));
+                            std::getline(infile,line);
+                            axis.neutral = std::stoi(get_value_fromtag(line,"NeutralValue"));
+                            std::getline(infile,line);
+                            axis.deadband = std::stod(get_value_fromtag(line,"Deadband"));
+                            std::getline(infile,line);
+                            axis.invert = std::stoi(get_value_fromtag(line,"Invert"));
+                            joy.axes.push_back(axis);
+                            std::getline(infile,line);
+                        }
                     }
+                    qDebug() << "Found all axis's";
+                    return true;
                 }
-                qDebug() << "Found all axis's";
-                return true;
             }
         }
     }
@@ -553,22 +587,22 @@ void MainWindow::bRTH_pressed()
 }
 void MainWindow::bArmDisarm_pressed()
 {
-    if((armdisarm_state == ARMEDSTATUS_ARMED) ||
-       (armdisarm_state == ARMEDSTATUS_ARMING) ||
-       (armdisarm_state == ARMEDSTATUS_DISARMED) ||
-       (armdisarm_state == ARMEDSTATUS_DISARMING))
+    if(armdisarm_state == ARMEDSTATUS_ARMED)
     {
-        if(armdisarm_command == ROVERCOMMAND_DISARM) { armdisarm_command = ROVERCOMMAND_ARM; }
-        else { armdisarm_command = ROVERCOMMAND_DISARM; }
-        send_Arm_Command_message(armdisarm_command);
+        armdisarm_command = ROVERCOMMAND_DISARM;
     }
+    else if(armdisarm_state == ARMEDSTATUS_DISARMED)
+    {
+        armdisarm_command = ROVERCOMMAND_ARM;
+    }
+    send_Arm_Command_message(armdisarm_command);
 }
 
 void MainWindow::b1_pressed()
 {
     if(buttons.at(0) == 0) { buttons.at(0) = 1; }
     else { buttons.at(0) = 0; }
-     send_RC_message(0);
+    send_RC_message(0);
 }
 void MainWindow::b2_pressed()
 {
@@ -610,7 +644,7 @@ void MainWindow::send_RC_message(int a)
 }
 void MainWindow::send_Arm_Command_message(int a)
 {
-    myUDPTransmitter.send_ArmCommand_0xAB27(armdisarm_command);
+    myUDPTransmitter.send_Command_0xAB02(armdisarm_command,ROVERCOMMAND_NONE,ROVERCOMMAND_NONE,ROVERCOMMAND_NONE,"","");
 }
 
 MainWindow::~MainWindow()
@@ -631,9 +665,9 @@ void MainWindow::kill_application(bool value)
 }
 void MainWindow::changefilter_messageviewer()
 {
-   //qDebug() << "changing filter to: " << item;
+    //qDebug() << "changing filter to: " << item;
 
-   // qDebug() << " new: " << newitem.text(0);
+    // qDebug() << " new: " << newitem.text(0);
 }
 
 void MainWindow::clear_messageviewer(QString value)
@@ -653,7 +687,8 @@ void MainWindow::update_armeddisarmed_text(int value)
     case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; break;
     case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMING\nCANNOT ARM"; break;
     case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
-    case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED";
+    case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED"; break;
+    default: tempstr = "UNDEFINED"; break;
     }
     ui->bArmDisarm->setText(tempstr);
 }
@@ -664,21 +699,21 @@ void MainWindow::read_joystick()
     read(joy_fd,&js,sizeof(struct js_event));
     switch (js.type & ~JS_EVENT_INIT)
     {
-        case JS_EVENT_AXIS:
-            joy_axis[js.number] = js.value;
-            break;
-        case JS_EVENT_BUTTON:
-            joy_button[js.number] = js.value;
-            break;
+    case JS_EVENT_AXIS:
+        joy_axis[js.number] = js.value;
+        break;
+    case JS_EVENT_BUTTON:
+        joy_button[js.number] = js.value;
+        break;
     }
     //Read ArmDisarm Button
     if((last_joy_sidebutton == 0) && (joy_button[JOY_BUTTON_SIDE] == 1))
     {
         last_joy_sidebutton = 1;
         if((armdisarm_state == ARMEDSTATUS_ARMED) ||
-           (armdisarm_state == ARMEDSTATUS_ARMING) ||
-           (armdisarm_state == ARMEDSTATUS_DISARMED) ||
-           (armdisarm_state == ARMEDSTATUS_DISARMING))
+                (armdisarm_state == ARMEDSTATUS_ARMING) ||
+                (armdisarm_state == ARMEDSTATUS_DISARMED) ||
+                (armdisarm_state == ARMEDSTATUS_DISARMING))
         {
             if(armdisarm_command == ROVERCOMMAND_DISARM) { armdisarm_command = ROVERCOMMAND_ARM; }
             else { armdisarm_command = ROVERCOMMAND_DISARM; }
@@ -703,8 +738,12 @@ qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
             {
                 invalue = -1*invalue;
             }
+            if(invalue > 25000)
+            {
+                int stop = 1;
+            }
             out = (qint32)scale_value((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
-                        (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0));
+                                      (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0));
             return out;
 
         }
@@ -745,100 +784,106 @@ void MainWindow::update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int
 }
 void MainWindow::update_OperationPanel()
 {
-    qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
-    ui->XAxis->setValue(x_out);
-    ui->lXAxisValue->setText("X:" + QString::number(x_out));
+    if(joystick_available == 1)
+    {
+        qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
+        ui->XAxis->setValue(x_out);
+        ui->lXAxisValue->setText("X:" + QString::number(x_out));
 
-    qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
-    ui->YAxis->setValue(y_out);
-    ui->lYAxisValue->setText("Y:" + QString::number(y_out));
+        qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
+        ui->YAxis->setValue(y_out);
+        ui->lYAxisValue->setText("Y:" + QString::number(y_out));
 
-    qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
-    ui->ZAxis->setValue(z_out);
-    ui->lZAxisValue->setText("Z:" + QString::number(z_out));
+        qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
+        ui->ZAxis->setValue(z_out);
+        ui->lZAxisValue->setText("Z:" + QString::number(z_out));
 
-    myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
-                                            y_out,
-                                            z_out,
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            joy_button[JOY_BUTTON_TRIGGER],
-                                            joy_button[JOY_BUTTON_MIDDLE],
-                                            joy_button[JOY_BUTTON_SIDE],
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            0);
+        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+                                                   y_out,
+                                                   z_out,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   joy_button[JOY_BUTTON_TRIGGER],
+                                                   joy_button[JOY_BUTTON_MIDDLE],
+                                                   joy_button[JOY_BUTTON_SIDE],
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0);
+    }
 }
 
 void MainWindow::update_CalibrationPanel()
 {
-    qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
-    ui->XAxis->setValue(x_out);
-    ui->lXAxisValue->setText("X:" + QString::number(x_out));
+    if(joystick_available == true)
+    {
+        qint32 x_out = compute_joystickoutput(JOY_X_AXIS,joy_axis[JOY_X_AXIS]);
+        ui->XAxis->setValue(x_out);
+        ui->lXAxisValue->setText("X:" + QString::number(x_out));
 
-    qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
-    ui->YAxis->setValue(y_out);
-    ui->lYAxisValue->setText("Y:" + QString::number(y_out));
+        qint32 y_out = compute_joystickoutput(JOY_Y_AXIS,joy_axis[JOY_Y_AXIS]);
+        ui->YAxis->setValue(y_out);
+        ui->lYAxisValue->setText("Y:" + QString::number(y_out));
 
-    qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
-    ui->ZAxis->setValue(z_out);
-    ui->lZAxisValue->setText("Z:" + QString::number(z_out));
+        qint32 z_out = compute_joystickoutput(JOY_Z_AXIS,joy_axis[JOY_Z_AXIS]);
+        ui->ZAxis->setValue(z_out);
+        ui->lZAxisValue->setText("Z:" + QString::number(z_out));
 
-    ui->bJoyButton1->setDown(joy_button[JOY_BUTTON_TRIGGER]);
-    ui->bJoyButton2->setDown(joy_button[JOY_BUTTON_MIDDLE]);
-    ui->bJoyButton3->setDown(joy_button[JOY_BUTTON_SIDE]);
-    if(joy_axis[JOY_POV_HORZ] < 0)
-    {
-        ui->bJoyPOVLeft->setDown(true);
-        ui->bJoyPOVRight->setDown(false);
+        ui->bJoyButton1->setDown(joy_button[JOY_BUTTON_TRIGGER]);
+        ui->bJoyButton2->setDown(joy_button[JOY_BUTTON_MIDDLE]);
+        ui->bJoyButton3->setDown(joy_button[JOY_BUTTON_SIDE]);
+        if(joy_axis[JOY_POV_HORZ] < 0)
+        {
+            ui->bJoyPOVLeft->setDown(true);
+            ui->bJoyPOVRight->setDown(false);
+        }
+        else if(joy_axis[JOY_POV_HORZ] > 0)
+        {
+            ui->bJoyPOVLeft->setDown(false);
+            ui->bJoyPOVRight->setDown(true);
+        }
+        else
+        {
+            ui->bJoyPOVLeft->setDown(false);
+            ui->bJoyPOVRight->setDown(false);
+        }
+        if(joy_axis[JOY_POV_VERT] > 0)
+        {
+            ui->bJoyPOVDown->setDown(true);
+            ui->bJoyPOVUp->setDown(false);
+        }
+        else if(joy_axis[JOY_POV_VERT] < 0)
+        {
+            ui->bJoyPOVDown->setDown(false);
+            ui->bJoyPOVUp->setDown(true);
+        }
+        else
+        {
+            ui->bJoyPOVDown->setDown(false);
+            ui->bJoyPOVUp->setDown(false);
+        }
+        qDebug() << "X: " << x_out;
+        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+                                                   y_out,
+                                                   z_out,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   joy_button[JOY_BUTTON_TRIGGER],
+                                                   joy_button[JOY_BUTTON_MIDDLE],
+                                                   joy_button[JOY_BUTTON_SIDE],
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0);
     }
-    else if(joy_axis[JOY_POV_HORZ] > 0)
-    {
-        ui->bJoyPOVLeft->setDown(false);
-        ui->bJoyPOVRight->setDown(true);
-    }
-    else
-    {
-        ui->bJoyPOVLeft->setDown(false);
-        ui->bJoyPOVRight->setDown(false);
-    }
-    if(joy_axis[JOY_POV_VERT] > 0)
-    {
-        ui->bJoyPOVDown->setDown(true);
-        ui->bJoyPOVUp->setDown(false);
-    }
-    else if(joy_axis[JOY_POV_VERT] < 0)
-    {
-        ui->bJoyPOVDown->setDown(false);
-        ui->bJoyPOVUp->setDown(true);
-    }
-    else
-    {
-        ui->bJoyPOVDown->setDown(false);
-        ui->bJoyPOVUp->setDown(false);
-    }
-
-    myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
-                                            y_out,
-                                            z_out,
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            joy_button[JOY_BUTTON_TRIGGER],
-                                            joy_button[JOY_BUTTON_MIDDLE],
-                                            joy_button[JOY_BUTTON_SIDE],
-                                            0,
-                                            0,
-                                            0,
-                                            0,
-                                            0);
 }
 
 void MainWindow::update_devicelist()
@@ -916,13 +961,13 @@ std::string MainWindow::get_level_string(int value)
 {
     switch (value)
     {
-        case DEBUG: return "DEBUG"; break;
-        case INFO: return "INFO"; break;
-        case NOTICE: return "NOTICE"; break;
-        case WARN: return "WARN"; break;
-        case ERROR: return "ERROR"; break;
-        case FATAL: return "FATAL"; break;
-        default: return ""; break;
+    case DEBUG: return "DEBUG"; break;
+    case INFO: return "INFO"; break;
+    case NOTICE: return "NOTICE"; break;
+    case WARN: return "WARN"; break;
+    case ERROR: return "ERROR"; break;
+    case FATAL: return "FATAL"; break;
+    default: return ""; break;
     }
 }
 bool MainWindow::create_emptyjoystickcalibrationfile()

@@ -125,6 +125,8 @@ private:
     int DSRouter_Active;
     std::string Rover_IPAddress;
     int Rover_Active;
+    int joystick_available;
+
 
 
    // QChart *ResourceChart;

@@ -56,7 +56,7 @@
 #include <QTimer>
 #include <QElapsedTimer>
 #include "helper.h"
-#include "ipmessage.h"
+#include "udpmessage.h"
 QT_BEGIN_NAMESPACE
 class QLabel;
 class QPushButton;
@@ -84,7 +84,7 @@ private:
 
     QUdpSocket *udpSocket;
     QHostAddress groupAddress;
-    IPMessageHandler *ipmessagehandler;
+    UDPMessageHandler *udpmessagehandler;
     QElapsedTimer lastcomm_timer;
 };
 

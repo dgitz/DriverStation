@@ -55,7 +55,7 @@
 #include <QHostAddress>
 #include <QTimer>
 #include "helper.h"
-#include "ipmessage.h"
+//#include "ipmessage.h"
 QT_BEGIN_NAMESPACE
 class QLabel;
 class QPushButton;
@@ -70,7 +70,7 @@ public:
     TCPTransmitter(QWidget *parent = 0);
 signals:
 private:
-        IPMessageHandler *ipmessagehandler;
+       // IPMessageHandler *ipmessagehandler;
 
 
 
