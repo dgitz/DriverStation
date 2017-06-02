@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
     timer_10ms = new QTimer(this);
+    timer_50ms = new QTimer(this);
     timer_100ms = new QTimer(this);
     timer_1000ms = new QTimer(this);
     timer_5000ms = new QTimer(this);
@@ -87,6 +88,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
 
     timer_10ms->start(10);
+    timer_50ms->start(50);
     timer_100ms->start(100);
     timer_1000ms->start(1000);
     timer_5000ms->start(5000);
@@ -155,7 +157,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
                 bool create = create_defaultjoystick(name,num_axes);
             }
-            connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
+            connect(timer_50ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
         }
 
 
@@ -213,7 +215,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+    connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
 
     last_joy_sidebutton = 0;

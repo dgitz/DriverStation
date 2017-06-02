@@ -54,6 +54,7 @@
 #include <QDialog>
 #include <QHostAddress>
 #include <QTimer>
+#include <QElapsedTimer>
 #include "helper.h"
 #include "udpmessage.h"
 QT_BEGIN_NAMESPACE
@@ -85,6 +86,10 @@ private:
     QString RC_Server;
     UDPMessageHandler *udpmessagehandler;
 
+    QElapsedTimer RemoteControl_AB10_timer;
+    QElapsedTimer ArmControl_AB26_timer;
+    QElapsedTimer Command_AB02_timer;
+    QElapsedTimer Heartbeat_AB31_timer;
 
 };
 
