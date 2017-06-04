@@ -326,15 +326,15 @@ void MainWindow::tabChanged()
 {
     if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
     {
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
     }
     else if(ui->tabWidget->currentIndex() == OPERATION_TAB)
     {
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
 
     }
 }
@@ -799,7 +799,10 @@ void MainWindow::update_OperationPanel()
         ui->ZAxis->setValue(z_out);
         ui->lZAxisValue->setText("Z:" + QString::number(z_out));
 
-        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+        QDateTime currentdatetime = QDateTime::currentDateTime();
+        quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
+                                                   x_out,
                                                    y_out,
                                                    z_out,
                                                    0,
@@ -867,8 +870,10 @@ void MainWindow::update_CalibrationPanel()
             ui->bJoyPOVDown->setDown(false);
             ui->bJoyPOVUp->setDown(false);
         }
-        qDebug() << "X: " << x_out;
-        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+        QDateTime currentdatetime = QDateTime::currentDateTime();
+        quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
+                                                   x_out,
                                                    y_out,
                                                    z_out,
                                                    0,

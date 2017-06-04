@@ -85,7 +85,7 @@ bool UDPTransmitter::send_ArmControl_0xAB26(int device,int axis1,int axis2,int a
     //qDebug() << "Send AB26 to" << RC_Server << " : " << buffer << endl;
 }
 
-bool UDPTransmitter::send_RemoteControl_0xAB10(int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,
+bool UDPTransmitter::send_RemoteControl_0xAB10(quint64 timestamp,int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,
                                                                            int button1,int button2,int button3,int button4, int button5,int button6,int button7,int button8)
 {
     qDebug() << "Sent RemoteControl (0xAB10) @ " << (1000000000.0/RemoteControl_AB10_timer.nsecsElapsed());
@@ -93,7 +93,7 @@ bool UDPTransmitter::send_RemoteControl_0xAB10(int axis1,int axis2,int axis3,int
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
     //std::string sendstr("123,456");
-    QString buffer = udpmessagehandler->encode_RemoteControlUDP(axis1,axis2,axis3,axis4,axis5,axis6,axis7,axis8,
+    QString buffer = udpmessagehandler->encode_RemoteControlUDP(timestamp,axis1,axis2,axis3,axis4,axis5,axis6,axis7,axis8,
                                                                 button1,button2,button3,button4,button5,button6,button7,button8);
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     //qDebug() << "Send AB10 to" << RC_Server << " : " << buffer << endl;
