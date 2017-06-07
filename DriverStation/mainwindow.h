@@ -150,6 +150,7 @@ private:
     double *joy_axis;
     char *joy_button;
     QTimer *timer_10ms;
+    QTimer *timer_50ms;
     QTimer *timer_100ms;
     QTimer *timer_1000ms;
     QTimer *timer_5000ms;

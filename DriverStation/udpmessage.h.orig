@@ -1,5 +1,9 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2017-06-06 21:08:25.169586***/
+<<<<<<< HEAD
+/***Created on:2017-06-05 22:53:28.505724***/
+=======
+/***Created on:2017-06-03 16:41:36.278467***/
+>>>>>>> release
 #ifndef UDPMESSAGE_H
 #define UDPMESSAGE_H
 #include <QString>
@@ -14,7 +18,10 @@
 #define UDP_Heartbeat_ID "AB31"
 #define UDP_FindTarget_ID "AB34"
 #define UDP_Power_ID "AB37"
+<<<<<<< HEAD
 #define UDP_EStop_ID "AB38"
+=======
+>>>>>>> release
 
 class UDPMessageHandler
 {
@@ -31,7 +38,11 @@ public:
 	QString encode_HeartbeatUDP(std::string Device,uint64_t Current_Timestamp,uint64_t Expected_Timestamp);
 	QString encode_FindTargetUDP(std::string SearchDevice);
 	int decode_PowerUDP(QList<QByteArray> items,std::string* BatteryName,int* PowerLevel,int* PowerState);
+<<<<<<< HEAD
+	QString encode_EStopUDP(std::string DeviceName,int State);
 	int decode_EStopUDP(QList<QByteArray> items,std::string* DeviceName,int* State);
+=======
+>>>>>>> release
 private:
 };
 #endif

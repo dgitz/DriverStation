@@ -87,7 +87,7 @@ void UDPReceiver::processPendingDatagrams()
         udpSocket->readDatagram(datagram.data(), datagram.size());
         QList<QByteArray> items = datagram.split(',');
         int message_id = items.at(0).toInt();
-        //qDebug() << "Got: " << message_id;
+       // qDebug() << "Got: " << message_id;
         switch(message_id)
         {
 
@@ -155,6 +155,7 @@ void UDPReceiver::processPendingDatagrams()
             }
             case ESTOP_ID:
             {
+
                 std::string source;
                 int state;
                 if(udpmessagehandler->decode_EStopUDP(items,&source,&state))

@@ -1,5 +1,9 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2017-06-06 21:08:25.169618***/
+<<<<<<< HEAD
+/***Created on:2017-06-05 22:53:28.505756***/
+=======
+/***Created on:2017-06-03 16:41:36.278499***/
+>>>>>>> release
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -158,10 +162,23 @@ int UDPMessageHandler::decode_PowerUDP(QList<QByteArray> items,std::string* Batt
 	*PowerState=(int)items.at(3).toInt();
 	return 1;
 }
+<<<<<<< HEAD
+QString UDPMessageHandler::encode_EStopUDP(std::string DeviceName,int State)
+{
+	QString tempstr = "";
+	tempstr.append(UDP_EStop_ID);
+	tempstr.append(",");
+	tempstr.append(QString::fromStdString(DeviceName));
+	tempstr.append(",");
+	tempstr.append(QString::number(State));
+	return tempstr;
+}
 int UDPMessageHandler::decode_EStopUDP(QList<QByteArray> items,std::string* DeviceName,int* State)
 {
-	if(items.size() != 3){ return 0; }
+	if(items.size() != 5){ return 0; }
 	*DeviceName=items.at(1).toStdString();
 	*State=(int)items.at(2).toInt();
 	return 1;
 }
+=======
+>>>>>>> release

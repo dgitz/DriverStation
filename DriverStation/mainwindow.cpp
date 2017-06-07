@@ -51,6 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //window.resize(400,300);
     //window.show();
     ui->groupCalibrate->hide();
+    ui->tEStopState->setStyleSheet("color: white;"
+                                   "background-color: red;"
+                                   "font: bold italic 36px;");
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
@@ -66,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
     timer_10ms = new QTimer(this);
+    timer_50ms = new QTimer(this);
     timer_100ms = new QTimer(this);
     timer_1000ms = new QTimer(this);
     timer_5000ms = new QTimer(this);
@@ -88,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
 
     timer_10ms->start(10);
+    timer_50ms->start(50);
     timer_100ms->start(100);
     timer_1000ms->start(1000);
     timer_5000ms->start(5000);
@@ -156,7 +161,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
                 bool create = create_defaultjoystick(name,num_axes);
             }
-            connect(timer_10ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
+            connect(timer_50ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
         }
 
 
@@ -214,7 +219,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+    connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
 
     last_joy_sidebutton = 0;
@@ -225,7 +230,28 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::update_estop(EStop estop)
 {
-    qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
+//   / qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
+    if(estop.state == ESTOP_ACTIVATED)
+    {
+        ui->tEStopState->setText("EMERGENCY STOPPED!");
+        ui->tEStopState->setStyleSheet("color: white;"
+                                       "background-color: red;"
+                                       "font: bold italic 36px;");
+    }
+    else if(estop.state == ESTOP_DISACTIVATED)
+    {
+        ui->tEStopState->setText("ESTOP OK");
+        ui->tEStopState->setStyleSheet("color: black;"
+                                       "background-color: white;"
+                                       "font: bold italic 36px;");
+    }
+    else
+    {
+        ui->tEStopState->setText("UNDEFINED");
+        ui->tEStopState->setStyleSheet("color: white;"
+                                       "background-color: red;"
+                                       "font: bold italic 36px;");
+    }
 }
 
 void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
@@ -329,15 +355,15 @@ void MainWindow::tabChanged()
 {
     if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
     {
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
     }
     else if(ui->tabWidget->currentIndex() == OPERATION_TAB)
     {
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
-        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
-        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
 
     }
 }
@@ -802,7 +828,10 @@ void MainWindow::update_OperationPanel()
         ui->ZAxis->setValue(z_out);
         ui->lZAxisValue->setText("Z:" + QString::number(z_out));
 
-        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+        QDateTime currentdatetime = QDateTime::currentDateTime();
+        quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
+                                                   x_out,
                                                    y_out,
                                                    z_out,
                                                    0,
@@ -870,8 +899,10 @@ void MainWindow::update_CalibrationPanel()
             ui->bJoyPOVDown->setDown(false);
             ui->bJoyPOVUp->setDown(false);
         }
-        qDebug() << "X: " << x_out;
-        myUDPTransmitter.send_RemoteControl_0xAB10(x_out,
+        QDateTime currentdatetime = QDateTime::currentDateTime();
+        quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
+                                                   x_out,
                                                    y_out,
                                                    z_out,
                                                    0,
