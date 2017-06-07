@@ -58,6 +58,11 @@ struct Joystick
     QString name;
     std::vector<Axis> axes;
 };
+struct EStop
+{
+    std::string source;
+    qint8 state;
+};
 
 #endif
 

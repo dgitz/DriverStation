@@ -80,6 +80,7 @@ signals:
     void new_resourcemessage(const Resource&);
     void new_armedstatusmessage(const int&);
     void new_image(const QPixmap&);
+    void new_estop(const EStop&);
 private:
 
     QUdpSocket *udpSocket;

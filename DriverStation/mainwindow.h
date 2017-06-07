@@ -75,6 +75,7 @@ public slots:
     void send_Arm_Command_message(int);
     void send_Heartbeat_message();
     void bArmDisarm_pressed();
+    void update_estop(EStop estop);
     void tabChanged();
     void b1_pressed();
     void b2_pressed();

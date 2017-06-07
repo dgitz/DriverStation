@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
+    connect(&myUDPReceiver,SIGNAL(new_estop(EStop)),this,SLOT(update_estop(EStop)));
 
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
@@ -222,6 +223,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
+void MainWindow::update_estop(EStop estop)
+{
+    qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
+}
 
 void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
 {

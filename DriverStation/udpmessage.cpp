@@ -1,5 +1,5 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2017-05-05 07:38:59.368089***/
+/***Created on:2017-06-05 22:53:28.505756***/
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -21,10 +21,12 @@ QString UDPMessageHandler::encode_CommandUDP(int Command,int Option1,int Option2
 	tempstr.append(QString::fromStdString(Description));
 	return tempstr;
 }
-QString UDPMessageHandler::encode_RemoteControlUDP(int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,int button1,int button2,int button3,int button4,int button5,int button6,int button7,int button8)
+QString UDPMessageHandler::encode_RemoteControlUDP(uint64_t Current_Timestamp,int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,int button1,int button2,int button3,int button4,int button5,int button6,int button7,int button8)
 {
 	QString tempstr = "";
 	tempstr.append(UDP_RemoteControl_ID);
+	tempstr.append(",");
+	tempstr.append(QString::number(Current_Timestamp));
 	tempstr.append(",");
 	tempstr.append(QString::number(axis1));
 	tempstr.append(",");
@@ -147,4 +149,29 @@ QString UDPMessageHandler::encode_FindTargetUDP(std::string SearchDevice)
 	tempstr.append(",");
 	tempstr.append(QString::fromStdString(SearchDevice));
 	return tempstr;
+}
+int UDPMessageHandler::decode_PowerUDP(QList<QByteArray> items,std::string* BatteryName,int* PowerLevel,int* PowerState)
+{
+	if(items.size() != 4){ return 0; }
+	*BatteryName=items.at(1).toStdString();
+	*PowerLevel=(int)items.at(2).toInt();
+	*PowerState=(int)items.at(3).toInt();
+	return 1;
+}
+QString UDPMessageHandler::encode_EStopUDP(std::string DeviceName,int State)
+{
+	QString tempstr = "";
+	tempstr.append(UDP_EStop_ID);
+	tempstr.append(",");
+	tempstr.append(QString::fromStdString(DeviceName));
+	tempstr.append(",");
+	tempstr.append(QString::number(State));
+	return tempstr;
+}
+int UDPMessageHandler::decode_EStopUDP(QList<QByteArray> items,std::string* DeviceName,int* State)
+{
+	if(items.size() != 5){ return 0; }
+	*DeviceName=items.at(1).toStdString();
+	*State=(int)items.at(2).toInt();
+	return 1;
 }

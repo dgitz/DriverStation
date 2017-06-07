@@ -153,7 +153,20 @@ void UDPReceiver::processPendingDatagrams()
                 }
                 break;
             }
-
+            case ESTOP_ID:
+            {
+                std::string source;
+                int state;
+                if(udpmessagehandler->decode_EStopUDP(items,&source,&state))
+                {
+                    lastcomm_timer.restart();
+                    EStop newestop;
+                    newestop.source = source;
+                    newestop.state = state;
+                    emit new_estop(newestop);
+                }
+                break;
+            }
             default:
             {
                 qDebug() << "No Match";
