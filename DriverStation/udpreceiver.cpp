@@ -58,6 +58,7 @@ UDPReceiver::UDPReceiver(QWidget *parent)
 {
     udpmessagehandler = new UDPMessageHandler();
     lastcomm_timer.restart();
+    lastcomm_EStop_timer.restart();
 }
 void UDPReceiver::Start()
 {
@@ -161,6 +162,7 @@ void UDPReceiver::processPendingDatagrams()
                 if(udpmessagehandler->decode_EStopUDP(items,&source,&state))
                 {
                     lastcomm_timer.restart();
+                    lastcomm_EStop_timer.restart();
                     EStop newestop;
                     newestop.source = source;
                     newestop.state = state;

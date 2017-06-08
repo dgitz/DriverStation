@@ -70,6 +70,7 @@ class UDPReceiver : public QObject
 public:
     UDPReceiver(QWidget *parent = 0);
     qint64 get_lastcomm() { return lastcomm_timer.elapsed(); }
+    qint64 get_lastcomm_EStop() { return lastcomm_EStop_timer.elapsed(); }
     void Start();
 
 private slots:
@@ -87,6 +88,7 @@ private:
     QHostAddress groupAddress;
     UDPMessageHandler *udpmessagehandler;
     QElapsedTimer lastcomm_timer;
+    QElapsedTimer lastcomm_EStop_timer;
 };
 
 #endif

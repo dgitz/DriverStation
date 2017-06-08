@@ -51,9 +51,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //window.resize(400,300);
     //window.show();
     ui->groupCalibrate->hide();
-    ui->tEStopState->setStyleSheet("color: white;"
-                                   "background-color: red;"
+    ui->tEStopState->setStyleSheet("color: black;"
+                                   "background-color: orange;"
                                    "font: bold italic 36px;");
+    ui->tEStopState->setText("LOST COMM!");
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
@@ -230,7 +231,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::update_estop(EStop estop)
 {
-//   / qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
+   // qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
     if(estop.state == ESTOP_ACTIVATED)
     {
         ui->tEStopState->setText("EMERGENCY STOPPED!");
@@ -247,7 +248,7 @@ void MainWindow::update_estop(EStop estop)
     }
     else
     {
-        ui->tEStopState->setText("UNDEFINED");
+        ui->tEStopState->setText("ESTOP\n NOT VALID");
         ui->tEStopState->setStyleSheet("color: white;"
                                        "background-color: red;"
                                        "font: bold italic 36px;");
@@ -523,10 +524,27 @@ void MainWindow::update_CalibrationGroup()
 void MainWindow::update_commstatus()
 {
     qint64 time_sincelastcomm = myUDPReceiver.get_lastcomm();
+    qint64 time_sincelastcomm_EStop = myUDPReceiver.get_lastcomm_EStop();
     if(time_sincelastcomm > 5000)// mS
     {
         armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
         armdisarm_command = ROVERCOMMAND_DISARM;
+        ui->bArmDisarm->setText("DISARMED\nCANNOT ARM");
+        ui->tEStopState->setStyleSheet("color: black;"
+                                       "background-color: orange;"
+                                       "font: bold italic 36px;");
+        ui->tEStopState->setText("LOST COMM!");
+    }
+
+    else if((time_sincelastcomm < 3000) && (time_sincelastcomm_EStop > 5000))
+    {
+        armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
+        armdisarm_command = ROVERCOMMAND_DISARM;
+        ui->bArmDisarm->setText("DISARMED\nCANNOT ARM");
+        ui->tEStopState->setStyleSheet("color: black;"
+                                       "background-color: orange;"
+                                       "font: bold italic 36px;");
+        ui->tEStopState->setText("ESTOP\nNOT AVAILABLE!");
     }
 
 }
@@ -715,7 +733,7 @@ void MainWindow::update_armeddisarmed_text(int value)
     case ARMEDSTATUS_ARMED: tempstr = "ARMED"; break;
     case ARMEDSTATUS_ARMING: tempstr = "ARMING"; break;
     case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; break;
-    case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMING\nCANNOT ARM"; break;
+    case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMED\nCANNOT ARM"; break;
     case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
     case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED"; break;
     default: tempstr = "UNDEFINED"; break;
