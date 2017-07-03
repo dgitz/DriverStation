@@ -121,3 +121,14 @@ bool UDPTransmitter::send_Heartbeat_0xAB31(std::string hostname,uint64_t t,uint6
     //qDebug() << "Send AB31 to" << RC_Server << " : " << buffer << endl;
     Heartbeat_AB31_timer.restart();
 }
+bool UDPTransmitter::send_TuneControlGroup(std::string name, std::string type, double v1, double v2, double v3)
+{
+    qDebug() << "Sent TuneControlGroup (0xAB39) @ " << (1000000000.0/TuneControlGroup_0A39_timer.nsecsElapsed());
+    QByteArray datagram;
+    QDataStream out(&datagram,QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_3);
+    QString buffer = udpmessagehandler->encode_TuneControlGroupUDP(name,type,v1,v2,v3);
+    xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
+    //qDebug() << "Send AB31 to" << RC_Server << " : " << buffer << endl;
+    TuneControlGroup_0A39_timer.restart();
+}

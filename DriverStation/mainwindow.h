@@ -17,6 +17,8 @@
 #include <QHostInfo>
 #include <QCloseEvent>
 #include <QFileInfo>
+#include <QXmlStreamReader>
+
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -37,6 +39,8 @@
 #define JOY_BUTTON_SIDE 3
 #define CALIBRATION_TAB 0
 #define OPERATION_TAB 1
+#define CALIBRATIONTAB_JOYSTICK 0
+#define CALIBRATIONTAB_TUNING 1
 
 using namespace QtCharts;
 namespace Ui {
@@ -76,7 +80,8 @@ public slots:
     void send_Heartbeat_message();
     void bArmDisarm_pressed();
     void update_estop(EStop estop);
-    void tabChanged();
+    void maintabChanged();
+    void calibrationtabChanged();
     void b1_pressed();
     void b2_pressed();
     void b3_pressed();
@@ -84,6 +89,7 @@ public slots:
     void update_CalibrationPanel();
     void update_OperationPanel();
     void update_CalibrationGroup();
+    void update_TuningPanel();
     void calibrate_Axis(const int);
     void calibrate_XAxis(const bool);
     void calibrate_YAxis(const bool);
@@ -91,13 +97,21 @@ public slots:
     void save_calibration(const bool);
     void cancel_calibration(const bool);
     void check_network();
-
+    void read_ControlGroupFile();
     void check_ROSServer_finished(int code, QProcess::ExitStatus status);
     void check_DSRouter_finished(int code, QProcess::ExitStatus status);
     void check_Rover_finished(int code, QProcess::ExitStatus status);
     void bRTH_pressed();
-
-    void update_imageview(QPixmap);
+    void controlGroupChanged(QString v);
+    void bTuningPBigger_pressed();
+    void bTuningPSmaller_pressed();
+    void bTuningIBigger_pressed();
+    void bTuningISmaller_pressed();
+    void bTuningDBigger_pressed();
+    void bTuningDSmaller_pressed();
+    void bTuningPReset_pressed();
+    void bTuningIReset_pressed();
+    void bTuningDReset_pressed();
 
 
 signals:
@@ -119,6 +133,8 @@ private:
     qint32 compute_joystickoutput(int axisid, qint32 invalue);
     double scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband);
     void update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert);
+
+
     int convert_pingms_tossi(int v);
     std::string ROS_Server_IPAddress;
     int ROSServer_Active;
@@ -158,6 +174,9 @@ private:
     QTime ROSServer_pingtimer;
     QTime Rover_pingtimer;
     QTime DSRouter_timer;
+
+    std::vector<ControlGroup> controlgroups;
+    ControlGroup current_cg;
 
     //QLabel iRouterActive;
 

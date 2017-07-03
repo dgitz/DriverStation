@@ -35,7 +35,7 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 CONFIG += mobility
-MOBILITY = 
+MOBILITY =
 
 DISTFILES += \
     DriverStation.pro.user \

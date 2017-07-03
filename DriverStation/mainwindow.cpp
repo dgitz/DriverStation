@@ -79,10 +79,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
 
-    connect(&myTCPReceiver,SIGNAL(new_image(QPixmap)),this,SLOT(update_imageview(QPixmap)));
 
-
-    connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(tabChanged()));
+    connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(maintabChanged()));
+    connect(ui->CalibrationSubTab,SIGNAL(currentChanged(int)),this,SLOT(calibrationtabChanged()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(send_Heartbeat_message()));
     connect(ui->bXAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_XAxis(bool)));
@@ -91,6 +90,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bCalibrateCancel,SIGNAL(clicked(bool)),SLOT(cancel_calibration(bool)));
     connect(ui->bCalibrateSave,SIGNAL(clicked(bool)),SLOT(save_calibration(bool)));
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
+    connect(ui->bControlGroupRead,SIGNAL(clicked(bool)),SLOT(read_ControlGroupFile()));
+    connect(ui->cbControlGroup,SIGNAL(currentIndexChanged(QString)),SLOT(controlGroupChanged(QString)));
+    connect(ui->bTuningPBigger,SIGNAL(clicked(bool)),SLOT(bTuningPBigger_pressed()));
+    connect(ui->bTuningPSmaller,SIGNAL(clicked(bool)),SLOT(bTuningPSmaller_pressed()));
+    connect(ui->bTuningIBigger,SIGNAL(clicked(bool)),SLOT(bTuningIBigger_pressed()));
+    connect(ui->bTuningISmaller,SIGNAL(clicked(bool)),SLOT(bTuningISmaller_pressed()));
+    connect(ui->bTuningDBigger,SIGNAL(clicked(bool)),SLOT(bTuningDBigger_pressed()));
+    connect(ui->bTuningDSmaller,SIGNAL(clicked(bool)),SLOT(bTuningDSmaller_pressed()));
+
+    connect(ui->bTuningPReset,SIGNAL(clicked(bool)),SLOT(bTuningPReset_pressed()));
+    connect(ui->bTuningIReset,SIGNAL(clicked(bool)),SLOT(bTuningIReset_pressed()));
+    connect(ui->bTuningDReset,SIGNAL(clicked(bool)),SLOT(bTuningDReset_pressed()));
+
 
     timer_10ms->start(10);
     timer_50ms->start(50);
@@ -228,6 +240,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 }
+void MainWindow::controlGroupChanged(QString v)
+{
+    for(std::size_t i = 0; i < controlgroups.size(); i++)
+    {
+        if(controlgroups.at(i).name == v)
+        {
+            current_cg = controlgroups.at(i);
+        }
+    }
+}
 
 void MainWindow::update_estop(EStop estop)
 {
@@ -351,17 +373,48 @@ void MainWindow::check_network()
         process->start("ping",QStringList() << params);
     }
 }
-
-void MainWindow::tabChanged()
+void MainWindow::calibrationtabChanged()
 {
-    if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
+    if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_JOYSTICK)
     {
-        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
     }
+    else if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_TUNING)
+    {
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        read_ControlGroupFile();
+        ui->cbControlGroup->setCurrentText(0);
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
+    }
+}
+
+void MainWindow::maintabChanged()
+{
+    if(ui->tabWidget->currentIndex()==CALIBRATION_TAB)
+    {
+
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_JOYSTICK)
+        {
+            disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
+            connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+            connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        }
+        else if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_TUNING)
+        {
+            disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+            disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+            read_ControlGroupFile();
+            ui->cbControlGroup->setCurrentText(0);
+            connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
+        }
+    }
     else if(ui->tabWidget->currentIndex() == OPERATION_TAB)
     {
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
@@ -418,13 +471,6 @@ void MainWindow::cancel_calibration(const bool)
         ui->bYAxisCal->setEnabled(true);
         ui->bZAxisCal->setEnabled(true);\
     }
-}
-
-void MainWindow::update_imageview(QPixmap pic)
-{
-    ui->label->setPixmap(pic);
-    ui->label->show();
-
 }
 
 void MainWindow::check_set_allcontrols_todefault()
@@ -487,6 +533,86 @@ void MainWindow::calibrate_Axis(int v)
     }
 
 
+}
+void MainWindow::bTuningPReset_pressed()
+{
+    current_cg.gain.P = current_cg.gain.P_default;
+    current_cg.gain.P_min = current_cg.gain.P-1.0;
+    current_cg.gain.P_max = current_cg.gain.P+1.0;
+    ui->dTuningP->setValue(0);
+}
+void MainWindow::bTuningIReset_pressed()
+{
+    current_cg.gain.I = current_cg.gain.I_default;
+    current_cg.gain.I_min = current_cg.gain.I-1.0;
+    current_cg.gain.I_max = current_cg.gain.I+1.0;
+    ui->dTuningI->setValue(0);
+}
+void MainWindow::bTuningDReset_pressed()
+{
+    current_cg.gain.D = current_cg.gain.D_default;
+    current_cg.gain.D_min = current_cg.gain.D-1.0;
+    current_cg.gain.D_max = current_cg.gain.D+1.0;
+    ui->dTuningD->setValue(0);
+}
+
+void MainWindow::bTuningPBigger_pressed()
+{
+    double range = current_cg.gain.P_max-current_cg.gain.P_min;
+    current_cg.gain.P_max = current_cg.gain.P + range*4.0;
+    current_cg.gain.P_min = current_cg.gain.P - range*4.0;
+    ui->dTuningP->setValue(0);
+}
+void MainWindow::bTuningPSmaller_pressed()
+{
+    double range = current_cg.gain.P_max-current_cg.gain.P_min;
+    current_cg.gain.P_max = current_cg.gain.P + range/4.0;
+    current_cg.gain.P_min = current_cg.gain.P - range/4.0;
+    ui->dTuningP->setValue(0);
+}
+void MainWindow::bTuningIBigger_pressed()
+{
+    double range = current_cg.gain.I_max-current_cg.gain.I_min;
+    current_cg.gain.I_max = current_cg.gain.I + range*4.0;
+    current_cg.gain.I_min = current_cg.gain.I - range*4.0;
+    ui->dTuningI->setValue(0);
+}
+void MainWindow::bTuningISmaller_pressed()
+{
+    double range = current_cg.gain.I_max-current_cg.gain.I_min;
+    current_cg.gain.I_max = current_cg.gain.I + range/4.0;
+    current_cg.gain.I_min = current_cg.gain.I - range/4.0;
+    ui->dTuningI->setValue(0);
+}
+void MainWindow::bTuningDBigger_pressed()
+{
+    double range = current_cg.gain.D_max-current_cg.gain.D_min;
+    current_cg.gain.D_max = current_cg.gain.D + range*4.0;
+    current_cg.gain.D_min = current_cg.gain.D - range*4.0;
+    ui->dTuningD->setValue(0);
+}
+void MainWindow::bTuningDSmaller_pressed()
+{
+    double range = current_cg.gain.D_max-current_cg.gain.D_min;
+    current_cg.gain.D_max = current_cg.gain.D + range/4.0;
+    current_cg.gain.D_min = current_cg.gain.D - range/4.0;
+    ui->dTuningD->setValue(0);
+}
+
+void MainWindow::update_TuningPanel()
+{
+    double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
+    double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
+    double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
+
+    current_cg.gain.P = Pscaled;
+    current_cg.gain.I = Iscaled;
+    current_cg.gain.D = Dscaled;
+
+    ui->lTuningPValue->setText(QString().setNum(current_cg.gain.P,'k',4));
+    ui->lTuningIValue->setText(QString().setNum(current_cg.gain.I,'k',4));
+    ui->lTuningDValue->setText(QString().setNum(current_cg.gain.D,'k',4));
+    myUDPTransmitter.send_TuneControlGroup(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D);
 }
 
 void MainWindow::update_CalibrationGroup()
@@ -790,7 +916,7 @@ qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
             {
                 int stop = 1;
             }
-            out = (qint32)scale_value((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
+            out = (qint32)((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
                                       (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0));
             return out;
 
@@ -809,6 +935,7 @@ double MainWindow::scale_value(double x,double neutral,double x1,double x2,doubl
     {
         double m = (y2-neutral)/(x2-(deadband));
         out = m*(x-x2)+y2;
+
     }
     else
     {
@@ -1179,5 +1306,103 @@ int MainWindow::convert_pingms_tossi(int v)
     {
         return 0;
     }
+}
+void MainWindow::read_ControlGroupFile()
+{
+    QFile file("/home/robot/config/ControlGroup.xml");
+    if(!file.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cannot read file" << file.errorString();
+            return;
+    }
+    QXmlStreamReader reader(&file);
+    if (reader.readNextStartElement())
+    {
+            if (reader.name() == "ControlGroupFile")
+            {
+                while(reader.readNextStartElement())
+                {
+                    if(reader.name() == "ControlGroupList")
+                    {
+                        while(reader.readNextStartElement())
+                        {
+                            if(reader.name() == "ControlGroup")
+                            {
+                                ControlGroup cg;
+
+                                while(reader.readNextStartElement())
+                                {
+                                    qDebug() << "name: " << reader.name();
+                                    if(reader.name() == "Name")
+                                    {
+
+                                        cg.name = reader.readElementText();
+                                    }
+                                    else if(reader.name() == "Command")
+                                    {
+                                        reader.skipCurrentElement();
+                                    }
+                                    else if(reader.name() == "Sensor")
+                                    {
+                                        reader.skipCurrentElement();
+                                    }
+                                    else if(reader.name() == "Output")
+                                    {
+                                        reader.skipCurrentElement();
+                                    }
+                                    else if(reader.name() == "Gain")
+                                    {
+                                        while(reader.readNextStartElement())
+                                        {
+                                            if(reader.name() == "Type")
+                                            {
+                                                cg.gain.type = reader.readElementText();
+                                            }
+                                            else if(reader.name() == "Proportional")
+                                            {
+                                                cg.gain.P = reader.readElementText().toDouble();
+                                                cg.gain.P_default = cg.gain.P;
+                                                cg.gain.P_min = cg.gain.P-1.0;
+                                                cg.gain.P_max = cg.gain.P+1.0;
+                                            }
+                                            else if(reader.name() == "Integral")
+                                            {
+                                                cg.gain.I = reader.readElementText().toDouble();
+                                                cg.gain.I_default = cg.gain.I;
+                                                cg.gain.I_min = cg.gain.I-1.0;
+                                                cg.gain.I_max = cg.gain.I+1.0;
+                                            }
+                                            else if(reader.name() == "Derivative")
+                                            {
+                                                cg.gain.D = reader.readElementText().toDouble();
+                                                cg.gain.D_default = cg.gain.D;
+                                                cg.gain.D_min = cg.gain.D-1.0;
+                                                cg.gain.D_max = cg.gain.D+1.0;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                controlgroups.push_back(cg);
+                            }
+                            else
+                            {
+                                reader.skipCurrentElement();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        reader.skipCurrentElement();
+                    }
+                }
+            }
+            else
+                reader.raiseError(QObject::tr("Incorrect file"));
+    }
+    for(std::size_t i = 0; i < controlgroups.size(); i++)
+    {
+        ui->cbControlGroup->addItem(controlgroups.at(i).name);
+    }
+    return;
 }
 

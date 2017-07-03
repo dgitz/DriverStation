@@ -63,6 +63,26 @@ struct EStop
     std::string source;
     qint8 state;
 };
-
+struct Gain
+{
+    QString type;
+    double P;
+    double I;
+    double D;
+    double P_default;
+    double I_default;
+    double D_default;
+    double P_min;
+    double P_max;
+    double I_min;
+    double I_max;
+    double D_min;
+    double D_max;
+};
+struct ControlGroup
+{
+    QString name;
+    Gain gain;
+};
 #endif
 
