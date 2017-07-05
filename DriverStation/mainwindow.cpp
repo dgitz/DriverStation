@@ -599,21 +599,7 @@ void MainWindow::bTuningDSmaller_pressed()
     ui->dTuningD->setValue(0);
 }
 
-void MainWindow::update_TuningPanel()
-{
-    double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
-    double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
-    double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
 
-    current_cg.gain.P = Pscaled;
-    current_cg.gain.I = Iscaled;
-    current_cg.gain.D = Dscaled;
-
-    ui->lTuningPValue->setText(QString().setNum(current_cg.gain.P,'k',4));
-    ui->lTuningIValue->setText(QString().setNum(current_cg.gain.I,'k',4));
-    ui->lTuningDValue->setText(QString().setNum(current_cg.gain.D,'k',4));
-    myUDPTransmitter.send_TuneControlGroup(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D);
-}
 
 void MainWindow::update_CalibrationGroup()
 {
@@ -916,8 +902,8 @@ qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
             {
                 int stop = 1;
             }
-            out = (qint32)((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
-                                      (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0));
+            out = (qint32)(scale_value((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
+                                      (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0)));
             return out;
 
         }
@@ -1064,6 +1050,26 @@ void MainWindow::update_CalibrationPanel()
                                                    0,
                                                    0);
     }
+}
+void MainWindow::update_TuningPanel()
+{
+    double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
+    double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
+    double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
+
+    current_cg.gain.P = Pscaled;
+    current_cg.gain.I = Iscaled;
+    current_cg.gain.D = Dscaled;
+
+    ui->lTuningPValue->setText(QString().setNum(current_cg.gain.P,'k',4));
+    ui->lTuningIValue->setText(QString().setNum(current_cg.gain.I,'k',4));
+    ui->lTuningDValue->setText(QString().setNum(current_cg.gain.D,'k',4));
+    ui->lTuningMaxValue->setText(QString::number(ui->hsTuningMaxValue->value()));
+    ui->lTuningMinValue->setText(QString::number(ui->hsTuningMinValue->value()));
+    ui->lTuningDefaultValue->setText(QString::number(ui->hsTuningDefaultValue->value()));
+    myUDPTransmitter.send_TuneControlGroup_0xAB39(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D,
+                                           ui->hsTuningMaxValue->value(),ui->hsTuningMinValue->value(),ui->hsTuningDefaultValue->value());
+    update_OperationPanel();
 }
 
 void MainWindow::update_devicelist()
@@ -1403,6 +1409,10 @@ void MainWindow::read_ControlGroupFile()
     {
         ui->cbControlGroup->addItem(controlgroups.at(i).name);
     }
+    ui->hsTuningMaxValue->setValue(1500);
+    ui->hsTuningMinValue->setValue(1500);
+    ui->hsTuningDefaultValue->setValue(1500);
+
     return;
 }
 

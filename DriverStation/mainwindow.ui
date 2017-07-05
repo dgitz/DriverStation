@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -547,7 +547,7 @@
          <rect>
           <x>90</x>
           <y>20</y>
-          <width>291</width>
+          <width>231</width>
           <height>23</height>
          </rect>
         </property>
@@ -624,9 +624,9 @@
         <property name="geometry">
          <rect>
           <x>520</x>
-          <y>60</y>
+          <y>110</y>
           <width>21</width>
-          <height>521</height>
+          <height>471</height>
          </rect>
         </property>
         <property name="orientation">
@@ -682,7 +682,7 @@
        <widget class="QPushButton" name="bControlGroupSave">
         <property name="geometry">
          <rect>
-          <x>380</x>
+          <x>320</x>
           <y>20</y>
           <width>80</width>
           <height>23</height>
@@ -913,14 +913,191 @@
          <bool>false</bool>
         </property>
        </widget>
+       <widget class="QSlider" name="hsTuningMaxValue">
+        <property name="geometry">
+         <rect>
+          <x>460</x>
+          <y>20</y>
+          <width>291</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1000</number>
+        </property>
+        <property name="maximum">
+         <number>2000</number>
+        </property>
+        <property name="sliderPosition">
+         <number>1500</number>
+        </property>
+        <property name="tracking">
+         <bool>true</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="invertedAppearance">
+         <bool>false</bool>
+        </property>
+        <property name="invertedControls">
+         <bool>false</bool>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::NoTicks</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="hsTuningMinValue">
+        <property name="geometry">
+         <rect>
+          <x>460</x>
+          <y>50</y>
+          <width>291</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1000</number>
+        </property>
+        <property name="maximum">
+         <number>2000</number>
+        </property>
+        <property name="sliderPosition">
+         <number>1500</number>
+        </property>
+        <property name="tracking">
+         <bool>true</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="invertedAppearance">
+         <bool>false</bool>
+        </property>
+        <property name="invertedControls">
+         <bool>false</bool>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::NoTicks</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="hsTuningDefaultValue">
+        <property name="geometry">
+         <rect>
+          <x>460</x>
+          <y>80</y>
+          <width>291</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1000</number>
+        </property>
+        <property name="maximum">
+         <number>2000</number>
+        </property>
+        <property name="sliderPosition">
+         <number>1500</number>
+        </property>
+        <property name="tracking">
+         <bool>true</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="invertedAppearance">
+         <bool>false</bool>
+        </property>
+        <property name="invertedControls">
+         <bool>false</bool>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::NoTicks</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>420</x>
+          <y>20</y>
+          <width>31</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Max</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_12">
+        <property name="geometry">
+         <rect>
+          <x>420</x>
+          <y>50</y>
+          <width>31</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Min:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>80</y>
+          <width>51</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Default:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lTuningMaxValue">
+        <property name="geometry">
+         <rect>
+          <x>760</x>
+          <y>20</y>
+          <width>59</width>
+          <height>15</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>1500</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lTuningMinValue">
+        <property name="geometry">
+         <rect>
+          <x>760</x>
+          <y>50</y>
+          <width>59</width>
+          <height>15</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>1500</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lTuningDefaultValue">
+        <property name="geometry">
+         <rect>
+          <x>760</x>
+          <y>80</y>
+          <width>59</width>
+          <height>15</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>1500</string>
+        </property>
+       </widget>
+       <zorder>dTuningP</zorder>
        <zorder>dTuningD</zorder>
        <zorder>dTuningI</zorder>
        <zorder>cbControlGroup</zorder>
        <zorder>bControlGroupRead</zorder>
-       <zorder>formLayoutWidget_2</zorder>
-       <zorder>dial</zorder>
-       <zorder>dial</zorder>
-       <zorder>verticalLayoutWidget</zorder>
        <zorder>bTuningPSmaller</zorder>
        <zorder>bTuningPBigger</zorder>
        <zorder>bTuningPReset</zorder>
@@ -939,6 +1116,15 @@
        <zorder>label_4</zorder>
        <zorder>bTuningDSmaller</zorder>
        <zorder>bTuningDBigger</zorder>
+       <zorder>hsTuningMaxValue</zorder>
+       <zorder>hsTuningMinValue</zorder>
+       <zorder>hsTuningDefaultValue</zorder>
+       <zorder>label</zorder>
+       <zorder>label_12</zorder>
+       <zorder>label_13</zorder>
+       <zorder>lTuningMaxValue</zorder>
+       <zorder>lTuningMinValue</zorder>
+       <zorder>lTuningDefaultValue</zorder>
       </widget>
      </widget>
     </widget>
@@ -946,25 +1132,6 @@
      <attribute name="title">
       <string>Operation</string>
      </attribute>
-     <widget class="QPushButton" name="bArmDisarm">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>30</y>
-        <width>281</width>
-        <height>61</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>16</pointsize>
-        <italic>true</italic>
-       </font>
-      </property>
-      <property name="text">
-       <string>UNDEFINED</string>
-      </property>
-     </widget>
      <widget class="QTextBrowser" name="tInfo">
       <property name="geometry">
        <rect>
@@ -1804,6 +1971,25 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="bArmDisarm">
+    <property name="geometry">
+     <rect>
+      <x>920</x>
+      <y>40</y>
+      <width>281</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+      <italic>true</italic>
+     </font>
+    </property>
+    <property name="text">
+     <string>UNDEFINED</string>
     </property>
    </widget>
   </widget>
