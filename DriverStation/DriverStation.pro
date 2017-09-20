@@ -9,6 +9,7 @@ QT += gui
 QT += network
 QT += charts
 QT += gamepad
+QT +=
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,13 +17,29 @@ TARGET = DriverStation
 TEMPLATE = app
 
 
+
+CONFIG+=link_pkgconfig
+PKGCONFIG+=Qt5GStreamer-1.0
+
+INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
+LIBS += -L$$QWTPATH/lib -lQt5GStreamer-1.0 -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0
+
+INCLUDEPATH += /usr/include/glib-2.0/ \
+               /usr/lib/x86_64-linux-gnu/glib-2.0/include/ \
+               /usr/include/gstreamer-1.0/ \
+               /usr/include/glib-2.0 \
+                /home/robot/other_packages/qt-gstreamer-1.2.0/install/include/
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     udpreceiver.cpp \
     udptransmitter.cpp \
     tcptransmitter.cpp \
     tcpreceiver.cpp \
-    udpmessage.cpp
+    udpmessage.cpp \
+    cameraworker.cpp \
+    camerastreamer.cpp \
+    camera.cpp
 
 HEADERS  += mainwindow.h \
     helper.h \
@@ -30,7 +47,10 @@ HEADERS  += mainwindow.h \
     udpreceiver.h \
     tcpreceiver.h \
     tcptransmitter.h \
-    udpmessage.h
+    udpmessage.h \
+    cameraworker.h \
+    camerastreamer.h \
+    camera.h
 
 FORMS    += mainwindow.ui
 

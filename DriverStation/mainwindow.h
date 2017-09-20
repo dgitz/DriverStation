@@ -19,14 +19,16 @@
 #include <QFileInfo>
 #include <QXmlStreamReader>
 
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <linux/joystick.h>
+#include "camera.h"
+
 
 
 #define JOY_X_AXIS 0
@@ -42,7 +44,7 @@
 #define CALIBRATIONTAB_JOYSTICK 0
 #define CALIBRATIONTAB_TUNING 1
 
-using namespace QtCharts;
+//using namespace QtCharts;
 namespace Ui {
 class MainWindow;
 }
@@ -55,6 +57,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     std::string get_level_string(int);
+
 
 
 public slots:
@@ -113,6 +116,8 @@ public slots:
     void bTuningIReset_pressed();
     void bTuningDReset_pressed();
 
+    void newCameraImage(QImage,bool);
+
 
 signals:
     void new_diagnosticmessage(Diagnostic);
@@ -143,6 +148,7 @@ private:
     std::string Rover_IPAddress;
     int Rover_Active;
     int joystick_available;
+        Camera camera;
 
 
 

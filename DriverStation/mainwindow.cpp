@@ -58,10 +58,15 @@ MainWindow::MainWindow(QWidget *parent) :
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
+
     myUDPTransmitter.set_RC_server(QString::fromStdString(Rover_IPAddress));
 
     myUDPReceiver.Start();
     myTCPReceiver.Start();
+
+    QObject::connect(&camera,SIGNAL(newFrameReady(QImage,bool)),this,SLOT(newCameraImage(QImage,bool)));
+    camera.startCapture();
+
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
@@ -115,11 +120,12 @@ MainWindow::MainWindow(QWidget *parent) :
     joy_axis = NULL;
     joy_button = NULL;
     joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
+
     if(joy_fd < 0)
     {
-        QMessageBox::information(this,
-                                 tr("Driver Station"),
-                                 tr("Joystick Not Found. Exiting."));
+       // QMessageBox::information(this,
+      //                           tr("Driver Station"),
+      //                           tr("Joystick Not Found. Exiting."));
         qDebug() << "Couldn't open joystick. Exiting.";
         //kill_application(true);
     }
@@ -238,6 +244,15 @@ MainWindow::MainWindow(QWidget *parent) :
     last_joy_sidebutton = 0;
 
 
+
+
+
+}
+void MainWindow::newCameraImage(QImage img, bool v)
+{
+    qDebug() << "Null?: " << img.isNull();
+   // qDebug() << "save: " << img.save("/home/robot/a.png");
+   ui->iCameraView->setPixmap(QPixmap::fromImage(img));
 
 }
 void MainWindow::controlGroupChanged(QString v)
