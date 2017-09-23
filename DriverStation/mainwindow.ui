@@ -1135,24 +1135,27 @@
      <widget class="QTextBrowser" name="tInfo">
       <property name="geometry">
        <rect>
-        <x>60</x>
-        <y>140</y>
-        <width>371</width>
-        <height>311</height>
+        <x>10</x>
+        <y>400</y>
+        <width>831</width>
+        <height>141</height>
        </rect>
       </property>
      </widget>
      <widget class="QLabel" name="iCameraView">
       <property name="geometry">
        <rect>
-        <x>510</x>
-        <y>190</y>
-        <width>251</width>
-        <height>221</height>
+        <x>10</x>
+        <y>10</y>
+        <width>507</width>
+        <height>380</height>
        </rect>
       </property>
       <property name="text">
-       <string>TextLabel</string>
+       <string>CameraView</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </widget>

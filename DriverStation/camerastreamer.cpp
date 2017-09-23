@@ -114,14 +114,12 @@ GstFlowReturn CameraStreamer::newBufferCallback(GstAppSink *app_sink, void *obj)
     GstMapInfo map;
 
     GstBuffer *buffer = gst_sample_get_buffer (sample);
-    qDebug() << "size: " << gst_buffer_get_size(buffer);
+    //qDebug() << "size: " << gst_buffer_get_size(buffer);
     gst_buffer_map (buffer, &map, GST_MAP_READ);
 //
 
     QImage img(map.data,width,height, QImage::Format_Indexed8);
-    qDebug() << "size: " << width << height;
     img = img.copy();
-
     if(((CameraStreamer*)obj)->m_cropImage)
     {
         int widthToCrop = ((CameraStreamer*)obj)->m_cropWidth, heightToCrop = ((CameraStreamer*)obj)->m_cropHeight;

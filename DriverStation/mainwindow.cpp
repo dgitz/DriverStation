@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    rx_image_counter = 0;
     ROS_Server_IPAddress = "10.0.0.111";
     DSRouter_IPAddress = "10.0.0.3";
     joystick_available = false;
@@ -242,6 +243,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
 
     last_joy_sidebutton = 0;
+    elap_timer.start();
 
 
 
@@ -250,8 +252,12 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 void MainWindow::newCameraImage(QImage img, bool v)
 {
-    qDebug() << "Null?: " << img.isNull();
-   // qDebug() << "save: " << img.save("/home/robot/a.png");
+    rx_image_counter++;
+    double framerate = rx_image_counter/(elap_timer.elapsed()/1000.0);
+   // QPainter p(&img);
+   // p.setPen(QPen(Qt::red));
+   // p.setFont(QFont("Times",12,QFont::Bold));
+   // p.drawText(img.rect(),Qt::AlignCenter,"Text");
    ui->iCameraView->setPixmap(QPixmap::fromImage(img));
 
 }

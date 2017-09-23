@@ -18,7 +18,7 @@
 #include <QCloseEvent>
 #include <QFileInfo>
 #include <QXmlStreamReader>
-
+#include <QElapsedTimer>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -124,6 +124,7 @@ signals:
     void new_devicemessage(Device);
 
 private:
+    QElapsedTimer elap_timer;
     Ui::MainWindow *ui;
     UDPReceiver myUDPReceiver;
     UDPTransmitter myUDPTransmitter;
@@ -183,6 +184,8 @@ private:
 
     std::vector<ControlGroup> controlgroups;
     ControlGroup current_cg;
+
+    quint64 rx_image_counter;
 
     //QLabel iRouterActive;
 
