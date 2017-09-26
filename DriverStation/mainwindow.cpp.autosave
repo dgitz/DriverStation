@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
     joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
 
     if(joy_fd < 0)
-    {
+    {cd 
         QMessageBox::information(this,
                                  tr("Driver Station"),
                                  tr("Joystick Not Found."));
