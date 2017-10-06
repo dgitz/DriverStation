@@ -1,5 +1,11 @@
 #include "camerastreamer.h"
-
+#include <vector>
+#include <stdio.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+using namespace cv;
+using namespace std;
 CameraStreamer::CameraStreamer(QObject *parent)
 {
     m_cropImage = false;
@@ -21,45 +27,49 @@ void CameraStreamer::stop()
 
 void CameraStreamer::reset()
 {
-        qDebug() << "reseting...";
 
 
         gst_element_set_state (pipeline, GST_STATE_NULL);
         gst_object_unref (pipeline);
 
 
-        if(initStreamer())
-            qDebug() << "Gstreamer reseted";
-        else
+        if(initStreamer() == false)
             qDebug() << "Error reseting gstreamer";
 }
 bool CameraStreamer::initStreamer()
 {
     gst_init (NULL, NULL);
-    //gst-launch-1.0 -e -v udpsrc port=5001 ! application/x-rtp, encoding-name=JPEG,payload=26 ! rtpjpegdepay ! jpegdec ! autovideosink
+    //gst-launch-1.0 -v tcpclientsrc host=10.0.0.128 port=5000  ! gdpdepay !  rtph264depay ! avdec_h264 ! videoconvert ! autovideosink sync=false
     pipeline = gst_pipeline_new("Camera");
-    source                  = gst_element_factory_make ("udpsrc",           "rtpsrc");
-    depay                   = gst_element_factory_make("rtpjpegdepay",      "depay");
-    decoder                 = gst_element_factory_make ("jpegdec",          "videodecoder");
+    source                  = gst_element_factory_make ("tcpclientsrc",           "cam-source");
+    depay                   = gst_element_factory_make("gdpdepay",      "depay");
+    rtpdepay                = gst_element_factory_make("rtph264depay","rtp-depay");
+    decoder                 = gst_element_factory_make ("avdec_h264",          "videodecoder");
+    videoconvert_1            = gst_element_factory_make("videoconvert","video-convert1");
+    //identity = gst_element_factory_make("identity", "identity");
+    //videoconvert_2            = gst_element_factory_make("videoconvert","video-convert2");
     sink                    = gst_element_factory_make ("appsink",          "video-output");
-    if (!pipeline || !source  || !depay || !decoder || !sink ) {
+    if (!pipeline || !source  || !depay || !rtpdepay || !decoder || !videoconvert_1  || !sink ) {
       qDebug() << "One element could not be created. Exiting.\n";
       return false;
     }
     callbacks.eos = NULL;
     callbacks.new_sample = newBufferCallback;
     callbacks.new_preroll = NULL;
-
     gst_app_sink_set_callbacks((GstAppSink *) sink, &callbacks, this, NULL);
     g_object_set (G_OBJECT(source), "port", 5001, NULL);
-    GstCaps *app_caps,*app_encoding;
-    app_caps = gst_caps_new_simple("application/x-rtp","payload",G_TYPE_INT,26,"encoding-name",G_TYPE_STRING,"JPEG","interlaced",G_TYPE_STRING,"progressive","format",G_TYPE_STRING,"RGB",NULL);
-    g_object_set(G_OBJECT(source),"caps",app_caps,NULL);
+    g_object_set (G_OBJECT(source),"host","10.0.0.128",NULL);
+    //g_object_set (G_OBJECT(videoconvert_2),"format","RGB",NULL);
+    //GstCaps *app_convert;
+    //app_convert = gst_caps_new_simple("video/x-raw","format",G_TYPE_STRING,"RGB",NULL);
+    //GstPad * convert = gst_element_get_static_pad (identity, "src");
+    //gst_pad_set_caps(convert,app_convert);s
+    //gst_pad_set_active(convert,true);
+    //g_object_set(G_OBJECT(videoconvert_1),"caps",app_convert,NULL);
     gst_bin_add_many (GST_BIN (pipeline),
-                      source, depay,decoder, sink, NULL);
-    if (!gst_element_link_many (source, depay,decoder, sink, NULL))
+                      source, depay,rtpdepay,decoder, videoconvert_1,sink, NULL);
+    if (!gst_element_link_many (source, depay,rtpdepay,decoder, videoconvert_1,sink, NULL))
         g_warning ("Main pipeline link Fail...");
-
     ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
@@ -67,7 +77,6 @@ bool CameraStreamer::initStreamer()
         gst_object_unref (pipeline);
         return false;
     }
-
     return true;
 }
 void CameraStreamer::emitNewImage(QImage img)
@@ -86,19 +95,13 @@ GstFlowReturn CameraStreamer::newBufferCallback(GstAppSink *app_sink, void *obj)
         qDebug() << "app_sink is NULL";
         return GST_FLOW_ERROR;
     }
-
     GstSample* sample = gst_app_sink_pull_sample(app_sink);
-
     if(!sample)
     {
         qDebug() << "Error retreiving buffer...";
-        // Finished playing.
         return GST_FLOW_ERROR;
     }
-
-    // Get the frame format.
     GstCaps* caps = gst_sample_get_caps (sample);
-
     if (!caps) {
         qDebug() << "could not get snapshot format\n";
         exit (-1);
@@ -107,31 +110,22 @@ GstFlowReturn CameraStreamer::newBufferCallback(GstAppSink *app_sink, void *obj)
     GstStructure* s = gst_caps_get_structure (caps, 0);
     int res = gst_structure_get_int (s, "width", &width)
         | gst_structure_get_int (s, "height", &height);
+
     if (!res) {
         qDebug() << "could not get snapshot dimension\n";
         exit (-1);
     }
     GstMapInfo map;
-
     GstBuffer *buffer = gst_sample_get_buffer (sample);
-    //qDebug() << "size: " << gst_buffer_get_size(buffer);
     gst_buffer_map (buffer, &map, GST_MAP_READ);
-//
-
-    QImage img(map.data,width,height, QImage::Format_Indexed8);
-    img = img.copy();
-    if(((CameraStreamer*)obj)->m_cropImage)
-    {
-        int widthToCrop = ((CameraStreamer*)obj)->m_cropWidth, heightToCrop = ((CameraStreamer*)obj)->m_cropHeight;
-        QRect areaToCrop(img.size().width()/2 - widthToCrop/2, img.size().height()/2 - heightToCrop/2, widthToCrop, heightToCrop);
-        img = img.copy(areaToCrop);
-    }
-
-    //img.save("/home/robot/a.jpg");
-    ((CameraStreamer*)obj)->emitNewImage(img);
-
+    cv::Mat temp_mat = cv::Mat(cv::Size(width, height+height/2), CV_8UC1, (char*)map.data);
+    cv::Mat result(height,width,3);
+    cv::cvtColor(temp_mat,result,CV_YUV2RGB_I420,3);
+    QImage *rgb;
+    rgb = new QImage(result.size().width, result.size().height, QImage::Format_RGB888);
+    memcpy(rgb->scanLine(0), (unsigned char*)result.data, rgb->width() * rgb->height() * result.channels());
+    ((CameraStreamer*)obj)->emitNewImage(*rgb);
     gst_buffer_unmap (buffer, &map);
     gst_sample_unref (sample);
     return GST_FLOW_OK;
-
 }

@@ -23,6 +23,20 @@ PKGCONFIG+=Qt5GStreamer-1.0
 
 INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
 LIBS += -L$$QWTPATH/lib -lQt5GStreamer-1.0 -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0
+INCLUDEPATH += /usr/local/include/opencv2
+LIBS += -L/usr/local/lib \
+-lopencv_core \
+-lopencv_imgproc \
+-lopencv_highgui \
+-lopencv_ml \
+-lopencv_video \
+-lopencv_features2d \
+-lopencv_calib3d \
+-lopencv_objdetect \
+-lopencv_contrib \
+-lopencv_legacy \
+-lopencv_flann \
+-lopencv_imgcodecs
 
 INCLUDEPATH += /usr/include/glib-2.0/ \
                /usr/lib/x86_64-linux-gnu/glib-2.0/include/ \
@@ -70,5 +84,6 @@ DISTFILES += \
     ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_2.png \
     ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_3.png \
     ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_4.png \
-    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_5.png
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_5.png \
+    ../../../Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/LostCameraFeed.png
 

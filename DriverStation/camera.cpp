@@ -49,13 +49,8 @@ void Camera::timeOut()
 
     if(m_time.elapsed() > 1000)
     {
-        // we have been more that 1 sec without get an video frame from the camera....
-        // sending out the error message...
-
-        //QImage img(":/resources/images/lostCameraConnection.png");
-        //emit newFrameReady(img, true);
-
-       //qDebug() << "emitting resetGst";
+        QImage img("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/LostCameraFeed.png");
+        emit newFrameReady(img,true);
        // emit reset();
     }
 

@@ -16,7 +16,7 @@ public slots:
     virtual void reset();
 private:
 
-    GstElement *pipeline, *source, *app, *depay,*decoder, *sink;
+    GstElement *pipeline, *source, *app, *depay,*rtpdepay,*decoder, *videoconvert_1, *identity,*videoconvert_2,*sink;
     GstBus *bus;
     GstMessage *msg;
     GstStateChangeReturn ret;
@@ -31,6 +31,7 @@ private:
     GstAppSinkCallbacks callbacks;
 
     static GstFlowReturn newBufferCallback(GstAppSink *app_sink, void *obj);
+    static QImage generate_rgbimage(QImage img,int width,int height);
 
     bool initStreamer();
     void emitNewImage(QImage img);
