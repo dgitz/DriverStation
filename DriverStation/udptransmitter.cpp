@@ -74,7 +74,7 @@ bool UDPTransmitter::set_RC_server(QString server)
 }
 bool UDPTransmitter::send_ArmControl_0xAB26(int device,int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int button1,int button2,int button3,int button4,int button5,int button6)
 {
-    qDebug() << "Sent ArmControl (0xAB26) @ " << (1000000000.0/ArmControl_AB26_timer.nsecsElapsed());
+    //qDebug() << "Sent ArmControl (0xAB26) @ " << (1000000000.0/ArmControl_AB26_timer.nsecsElapsed());
     QByteArray datagram;
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
@@ -88,7 +88,7 @@ bool UDPTransmitter::send_ArmControl_0xAB26(int device,int axis1,int axis2,int a
 bool UDPTransmitter::send_RemoteControl_0xAB10(quint64 timestamp,int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,
                                                                            int button1,int button2,int button3,int button4, int button5,int button6,int button7,int button8)
 {
-    qDebug() << "Sent RemoteControl (0xAB10) @ " << (1000000000.0/RemoteControl_AB10_timer.nsecsElapsed());
+    //qDebug() << "Sent RemoteControl (0xAB10) @ " << (1000000000.0/RemoteControl_AB10_timer.nsecsElapsed());
     QByteArray datagram;
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
@@ -101,7 +101,7 @@ bool UDPTransmitter::send_RemoteControl_0xAB10(quint64 timestamp,int axis1,int a
 }
 bool UDPTransmitter::send_Command_0xAB02(int command,int option1,int option2,int option3, std::string commandtext, std::string description)
 {
-    qDebug() << "Sent Command (0xAB02) @ " << (1000000000.0/Command_AB02_timer.nsecsElapsed());
+    //qDebug() << "Sent Command (0xAB02) @ " << (1000000000.0/Command_AB02_timer.nsecsElapsed());
     QByteArray datagram;
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
@@ -123,7 +123,7 @@ bool UDPTransmitter::send_Heartbeat_0xAB31(std::string hostname,uint64_t t,uint6
 }
 bool UDPTransmitter::send_TuneControlGroup_0xAB39(std::string name, std::string type, double v1, double v2, double v3,int maxvalue,int minvalue,int defaultvalue)
 {
-    qDebug() << "Sent TuneControlGroup (0xAB39) @ " << (1000000000.0/TuneControlGroup_0A39_timer.nsecsElapsed());
+    //qDebug() << "Sent TuneControlGroup (0xAB39) @ " << (1000000000.0/TuneControlGroup_0A39_timer.nsecsElapsed());
     QByteArray datagram;
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);

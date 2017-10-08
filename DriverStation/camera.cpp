@@ -12,10 +12,12 @@ Camera::~Camera()
     delete worker;
 }
 
-void Camera::startCapture()
+void Camera::startCapture(std::string ipaddress,uint32_t port)
 {
     #ifdef USE_CAM_GST
         worker = new CameraStreamer();
+        worker->set_stream(ipaddress,port);
+
     #endif
     worker->moveToThread(&workerThread);
     QObject::connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
@@ -26,39 +28,25 @@ void Camera::startCapture()
     workerThread.start();
 
     connect(&m_timer, SIGNAL(timeout()),this, SLOT(timeOut()));
-
- #ifdef USE_TEST_IMAGE
-    m_timer.setInterval(1.0/24.0*1000); //24 Hz
-#else
     emit captureImages();
     m_timer.setInterval(1000);  // 1Hz to check if we are getting frames from the camera...
-#endif
     m_timer.start();
     m_time.start();
 }
 
 void Camera::timeOut()
 {
-#ifdef USE_TEST_IMAGE
-    QImage img(1280,800, QImage::Format_RGB888);
-    img.fill(QColor("white"));
-//    QImage img("/home/pf/Downloads/soil.jpg","jpg");
-
-    emit newFrameReady(img, false);
-#else
 
     if(m_time.elapsed() > 1000)
     {
         QImage img("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/LostCameraFeed.png");
         emit newFrameReady(img,true);
-       // emit reset();
+        emit reset();
     }
-
-#endif
 }
 
 void Camera::setNewImage(QImage img)
 {
     m_time.restart();
-    emit newFrameReady(img/*.mirrored(true,false)*/, false);
+    emit newFrameReady(img, false);
 }

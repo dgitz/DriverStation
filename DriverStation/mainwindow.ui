@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>730</x>
-      <y>850</y>
+      <y>650</y>
       <width>151</width>
       <height>81</height>
      </rect>
@@ -33,7 +33,7 @@
       <x>20</x>
       <y>10</y>
       <width>861</width>
-      <height>831</height>
+      <height>641</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -1139,9 +1139,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>780</y>
+        <y>560</y>
         <width>831</width>
-        <height>21</height>
+        <height>51</height>
        </rect>
       </property>
      </widget>
@@ -1149,7 +1149,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>70</y>
         <width>640</width>
         <height>480</height>
        </rect>
@@ -1161,13 +1161,26 @@
        <set>Qt::AlignCenter</set>
       </property>
      </widget>
+     <widget class="QComboBox" name="cbCameraStreamChooser">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>20</y>
+        <width>471</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QPushButton" name="tEStopState">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>850</y>
+      <y>650</y>
       <width>701</width>
       <height>81</height>
      </rect>

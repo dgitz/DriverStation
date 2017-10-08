@@ -9,6 +9,14 @@ struct Resource
     qint64 ram_used_Mb;
     qint16 cpu_used_perc;
 };
+struct CameraStream
+{
+    std::string ip;
+    std::string hostname;
+    std::string DeviceName;
+    uint32_t port;
+    bool available;
+};
 
 struct Diagnostic
 {
@@ -22,6 +30,13 @@ struct Diagnostic
     int Message;
     std::string Description;
 };
+struct Port
+{
+    std::string name;
+    std::string Capability;
+    uint32_t number;
+};
+
 struct Node
 {
     qint64 time_delta_ms;
@@ -30,11 +45,13 @@ struct Node
 };
 struct Device
 {
-
+    std::string ParentDevice;
     std::string DeviceName;
     std::string Architecture;
     std::string DeviceType;
     std::string DeviceParent;
+    std::string PrimaryIP;
+    std::string Capability;
     int Level;
     qint64 time_delta_ms;
     std::vector<Node> Nodes;

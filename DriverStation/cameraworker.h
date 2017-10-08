@@ -9,6 +9,12 @@ class CameraWorker: public QObject
     Q_OBJECT
 public:
         explicit CameraWorker(QObject * parent = 0);
+        void set_stream(std::string ipaddress_,uint32_t port_)
+        {
+            ipaddress = ipaddress_;
+            port = port_;
+        }
+
 signals:
         void newImage(QImage img);
 public slots:
@@ -16,8 +22,7 @@ public slots:
         virtual void stop() = 0;
         virtual void reset() = 0;
 protected:
-            bool m_cropImage;
-            int m_cropWidth;
-            int m_cropHeight;
+            std::string ipaddress;
+            uint32_t port;
 };
 #endif CAMERAWORKER

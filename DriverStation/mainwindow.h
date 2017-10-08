@@ -106,6 +106,7 @@ public slots:
     void check_Rover_finished(int code, QProcess::ExitStatus status);
     void bRTH_pressed();
     void controlGroupChanged(QString v);
+    void cameraStreamChanged(int v);
     void bTuningPBigger_pressed();
     void bTuningPSmaller_pressed();
     void bTuningIBigger_pressed();
@@ -129,6 +130,8 @@ private:
     UDPReceiver myUDPReceiver;
     UDPTransmitter myUDPTransmitter;
     TCPReceiver myTCPReceiver;
+    bool load_DeviceFile();
+    bool load_MisConfigFile();
     Axis lookup_joystickaxis(Joystick joy, int v);
     QString joystickcalibrationfile_path;
     bool create_emptyjoystickcalibrationfile();
@@ -157,6 +160,7 @@ private:
     //QChartView *ResourceChartView;
 
     std::vector<Device> DeviceList;
+    std::vector<CameraStream> camerastreams;
     std::vector<int> buttons;
     QString messageviewer_filter;
     QString DeviceName;
@@ -184,6 +188,7 @@ private:
 
     std::vector<ControlGroup> controlgroups;
     ControlGroup current_cg;
+    std::vector<Port> ports;
 
     quint64 rx_image_counter;
 

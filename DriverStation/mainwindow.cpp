@@ -27,6 +27,15 @@ MainWindow::MainWindow(QWidget *parent) :
             }
         }
     }
+    if(load_DeviceFile() == false)
+    {
+        kill_application(true);
+    }
+    if(load_MisConfigFile() == false)
+    {
+        kill_application(true);
+    }
+
 
 
     /*chart->legend()->hide();
@@ -66,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
     myTCPReceiver.Start();
 
     QObject::connect(&camera,SIGNAL(newFrameReady(QImage,bool)),this,SLOT(newCameraImage(QImage,bool)));
-    camera.startCapture();
+
 
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
@@ -98,6 +107,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
     connect(ui->bControlGroupRead,SIGNAL(clicked(bool)),SLOT(read_ControlGroupFile()));
     connect(ui->cbControlGroup,SIGNAL(currentIndexChanged(QString)),SLOT(controlGroupChanged(QString)));
+    connect(ui->cbCameraStreamChooser,SIGNAL(currentIndexChanged(int)),SLOT(cameraStreamChanged(int)));
     connect(ui->bTuningPBigger,SIGNAL(clicked(bool)),SLOT(bTuningPBigger_pressed()));
     connect(ui->bTuningPSmaller,SIGNAL(clicked(bool)),SLOT(bTuningPSmaller_pressed()));
     connect(ui->bTuningIBigger,SIGNAL(clicked(bool)),SLOT(bTuningIBigger_pressed()));
@@ -241,24 +251,31 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
-
+    for(std::size_t i = 0; i < camerastreams.size(); i++)
+    {
+        QString tempstr = QString::fromStdString(camerastreams.at(i).DeviceName) + "@" + QString::fromStdString(camerastreams.at(i).hostname) + ":" + QString::number(camerastreams.at(i).port);
+        ui->cbCameraStreamChooser->addItem(tempstr);
+    }
+    ui->cbCameraStreamChooser->setCurrentText(0);
     last_joy_sidebutton = 0;
     elap_timer.start();
-
-
-
-
-
 }
+void MainWindow::cameraStreamChanged(int v)
+{
+    //camera.set_stream();
+    camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
+}
+
 void MainWindow::newCameraImage(QImage img, bool v)
 {
     rx_image_counter++;
     double framerate = rx_image_counter/(elap_timer.elapsed()/1000.0);
-   // QPainter p(&img);
-   // p.setPen(QPen(Qt::red));
-   // p.setFont(QFont("Times",12,QFont::Bold));
-   // p.drawText(img.rect(),Qt::AlignCenter,"Text");
-   ui->iCameraView->setPixmap(QPixmap::fromImage(img));
+    QPainter p(&img);
+    p.setPen(QPen(Qt::green));
+    p.setFont(QFont("Times",12,QFont::Bold));
+    QString tempstr = "FPS: " + QString::number(framerate,'f',2);
+    p.drawText(540,400,80,15,Qt::AlignCenter,tempstr);
+    ui->iCameraView->setPixmap(QPixmap::fromImage(img));
 
 }
 void MainWindow::controlGroupChanged(QString v)
@@ -1117,10 +1134,12 @@ void MainWindow::update_devicelist(const Device &device)
         }
 
     }
+    /*
     if(add_new_device == true)
     {
         DeviceList.push_back(device);
     }
+    */
 }
 
 void MainWindow::update_devicelist(const Diagnostic &diag)
@@ -1436,4 +1455,163 @@ void MainWindow::read_ControlGroupFile()
 
     return;
 }
+bool MainWindow::load_DeviceFile()
+{
+    QFile file("/home/robot/config/DeviceFile.xml");
+    if(!file.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cannot read DeviceFile.xml" << file.errorString();
+            return false;
+    }
+    QXmlStreamReader reader(&file);
+    if (reader.readNextStartElement())
+    {
+        if (reader.name() == "DeviceListFile")
+        {
+            while(reader.readNextStartElement())
+            {
+                if(reader.name() == "DeviceList")
+                {
+                    while(reader.readNextStartElement())
+                    {
+                        if(reader.name() == "Device")
+                        {
+                            Device dev;
 
+                            while(reader.readNextStartElement())
+                            {
+                                if(reader.name() == "ParentDevice")
+                                {
+
+                                    dev.ParentDevice = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "DeviceName")
+                                {
+                                    dev.DeviceName = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "DeviceType")
+                                {
+                                    dev.DeviceType = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "PrimaryIP")
+                                {
+                                    dev.PrimaryIP = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "Capability")
+                                {
+                                    dev.Capability = reader.readElementText().toStdString();
+                                }
+                                else
+                                {
+                                    reader.skipCurrentElement();
+                                }
+
+
+                            }
+                            DeviceList.push_back(dev);
+                            if(dev.Capability == "CameraStream")
+                            {
+                                CameraStream cam;
+                                cam.ip = "";
+                                cam.DeviceName = dev.DeviceName;
+                                cam.hostname = dev.ParentDevice;
+                                camerastreams.push_back(cam);
+                            }
+                        }
+
+                    }
+                }
+                else
+                {
+                    reader.skipCurrentElement();
+                }
+            }
+        }
+        else
+        {
+            reader.skipCurrentElement();
+        }
+    }
+
+    for(std::size_t i = 0; i < camerastreams.size(); i++)
+    {
+        if(camerastreams.at(i).ip == "")
+        {
+            for(std::size_t j = 0; j < DeviceList.size();j++)
+            {
+                if(camerastreams.at(i).hostname == DeviceList.at(j).DeviceName)
+                {
+                    camerastreams.at(i).ip = DeviceList.at(j).PrimaryIP;
+                    camerastreams.at(i).port = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+
+    return true;
+}
+bool MainWindow::load_MisConfigFile()
+{
+    QFile file("/home/robot/config/MiscConfig.xml");
+    if(!file.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cannot read MiscConfig.xml" << file.errorString();
+            return false;
+    }
+    QXmlStreamReader reader(&file);
+    if (reader.readNextStartElement())
+    {
+        if (reader.name() == "MiscConfigFile")
+        {
+            while(reader.readNextStartElement())
+            {
+                if(reader.name() == "PortList")
+                {
+                    while(reader.readNextStartElement())
+                    {
+                        if(reader.name() == "Port")
+                        {
+                            Port port;
+
+                            while(reader.readNextStartElement())
+                            {
+                                if(reader.name() == "Capability")
+                                {
+
+                                    port.Capability = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "Name")
+                                {
+                                    port.name = reader.readElementText().toStdString();
+                                }
+                                else if(reader.name() == "Number")
+                                {
+                                    QString portnumber = reader.readElementText();
+
+                                    port.number = portnumber.toUInt();
+                                }
+                                else
+                                {
+                                    reader.skipCurrentElement();
+                                }
+                            }
+
+                            ports.push_back(port);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for(std::size_t i = 0; i < ports.size(); i++)
+    {
+        if(ports.at(i).name == "CameraPort")
+        {
+            for(std::size_t j = 0; j < camerastreams.size();j++)
+            {
+                camerastreams.at(j).port = ports.at(i).number;
+            }
+        }
+    }
+    return true;
+}

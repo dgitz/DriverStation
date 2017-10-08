@@ -10,10 +10,12 @@ class CameraStreamer : public CameraWorker
     Q_OBJECT
 public:
     explicit CameraStreamer(QObject *parent = 0);
+
 public slots:
     virtual void captureImages();
     virtual void stop();
     virtual void reset();
+public:
 private:
 
     GstElement *pipeline, *source, *app, *depay,*rtpdepay,*decoder, *videoconvert_1, *identity,*videoconvert_2,*sink;
@@ -22,12 +24,6 @@ private:
     GstStateChangeReturn ret;
     guint bus_watch_id;
     GstCaps *caps;
-
-
-    gint width, height;
-    gboolean res;
-
-
     GstAppSinkCallbacks callbacks;
 
     static GstFlowReturn newBufferCallback(GstAppSink *app_sink, void *obj);

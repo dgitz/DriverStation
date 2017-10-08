@@ -8,9 +8,6 @@ using namespace cv;
 using namespace std;
 CameraStreamer::CameraStreamer(QObject *parent)
 {
-    m_cropImage = false;
-    m_cropWidth = 640;
-    m_cropHeight = 480;
 }
 
 void CameraStreamer::captureImages()
@@ -28,26 +25,22 @@ void CameraStreamer::stop()
 void CameraStreamer::reset()
 {
 
-
-        gst_element_set_state (pipeline, GST_STATE_NULL);
-        gst_object_unref (pipeline);
-
-
+        //gst_element_set_state (pipeline, GST_STATE_NULL);
+        //gst_object_unref (pipeline);
         if(initStreamer() == false)
-            qDebug() << "Error reseting gstreamer";
+        {
+
+        }
 }
 bool CameraStreamer::initStreamer()
 {
     gst_init (NULL, NULL);
-    //gst-launch-1.0 -v tcpclientsrc host=10.0.0.128 port=5000  ! gdpdepay !  rtph264depay ! avdec_h264 ! videoconvert ! autovideosink sync=false
     pipeline = gst_pipeline_new("Camera");
     source                  = gst_element_factory_make ("tcpclientsrc",           "cam-source");
     depay                   = gst_element_factory_make("gdpdepay",      "depay");
     rtpdepay                = gst_element_factory_make("rtph264depay","rtp-depay");
     decoder                 = gst_element_factory_make ("avdec_h264",          "videodecoder");
     videoconvert_1            = gst_element_factory_make("videoconvert","video-convert1");
-    //identity = gst_element_factory_make("identity", "identity");
-    //videoconvert_2            = gst_element_factory_make("videoconvert","video-convert2");
     sink                    = gst_element_factory_make ("appsink",          "video-output");
     if (!pipeline || !source  || !depay || !rtpdepay || !decoder || !videoconvert_1  || !sink ) {
       qDebug() << "One element could not be created. Exiting.\n";
@@ -57,15 +50,8 @@ bool CameraStreamer::initStreamer()
     callbacks.new_sample = newBufferCallback;
     callbacks.new_preroll = NULL;
     gst_app_sink_set_callbacks((GstAppSink *) sink, &callbacks, this, NULL);
-    g_object_set (G_OBJECT(source), "port", 5001, NULL);
-    g_object_set (G_OBJECT(source),"host","10.0.0.128",NULL);
-    //g_object_set (G_OBJECT(videoconvert_2),"format","RGB",NULL);
-    //GstCaps *app_convert;
-    //app_convert = gst_caps_new_simple("video/x-raw","format",G_TYPE_STRING,"RGB",NULL);
-    //GstPad * convert = gst_element_get_static_pad (identity, "src");
-    //gst_pad_set_caps(convert,app_convert);s
-    //gst_pad_set_active(convert,true);
-    //g_object_set(G_OBJECT(videoconvert_1),"caps",app_convert,NULL);
+    g_object_set (G_OBJECT(source), "port", port, NULL);
+    g_object_set (G_OBJECT(source),"host",ipaddress.c_str(),NULL);
     gst_bin_add_many (GST_BIN (pipeline),
                       source, depay,rtpdepay,decoder, videoconvert_1,sink, NULL);
     if (!gst_element_link_many (source, depay,rtpdepay,decoder, videoconvert_1,sink, NULL))
@@ -73,7 +59,7 @@ bool CameraStreamer::initStreamer()
     ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
-        g_printerr ("Unable to set the pipeline to the playing state.");
+        //g_printerr ("Unable to set the pipeline to the playing state.");
         gst_object_unref (pipeline);
         return false;
     }
