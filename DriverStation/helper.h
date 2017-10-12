@@ -2,6 +2,12 @@
 #define HELPER_H
 #include "/home/robot/catkin_ws/src/icarus_rover_v2/include/Definitions.h"
 
+enum CameraStatus {
+    UNDEFINED = 0,
+    AVAILABLE = 1,
+    TIMEOUT = 2,
+};
+
 struct Resource
 {
     double ReceivedTime;

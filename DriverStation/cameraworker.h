@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QImage>
 #include <QDebug>
+#include <gst/app/gstappsink.h>
+#include <glib.h>
 class CameraWorker: public QObject
 {
     Q_OBJECT
@@ -17,6 +19,7 @@ public:
 
 signals:
         void newImage(QImage img);
+        void newGSTImage(guint8 *map);
 public slots:
         virtual void captureImages() = 0;
         virtual void stop() = 0;

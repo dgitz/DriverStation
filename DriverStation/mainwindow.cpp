@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+//#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+//#include <opencv2/imgcodecs.hpp>
 
+//using namespace cv;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -75,7 +79,8 @@ MainWindow::MainWindow(QWidget *parent) :
     myTCPReceiver.Start();
 
     QObject::connect(&camera,SIGNAL(newFrameReady(QImage,bool)),this,SLOT(newCameraImage(QImage,bool)));
-
+    //QObject::connect(&camera,SIGNAL(newGSTFrameReady(guint8*,bool)),this,SLOT(newGSTCameraImage(guint8*,bool)));
+    QObject::connect(&camera,SIGNAL(camera_status(uint8_t)),this,SLOT(newCameraStatus(uint8_t)));
 
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
@@ -89,16 +94,17 @@ MainWindow::MainWindow(QWidget *parent) :
     timer_100ms = new QTimer(this);
     timer_1000ms = new QTimer(this);
     timer_5000ms = new QTimer(this);
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
+   // connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_commstatus()));
 
-    connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
+
 
 
     connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(maintabChanged()));
     connect(ui->CalibrationSubTab,SIGNAL(currentChanged(int)),this,SLOT(calibrationtabChanged()));
-    connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
+   // connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(send_Heartbeat_message()));
+
     connect(ui->bXAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_XAxis(bool)));
     connect(ui->bYAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_YAxis(bool)));
     connect(ui->bZAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_ZAxis(bool)));
@@ -249,7 +255,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
-    connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+    connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
     for(std::size_t i = 0; i < camerastreams.size(); i++)
     {
@@ -257,27 +263,62 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->cbCameraStreamChooser->addItem(tempstr);
     }
     ui->cbCameraStreamChooser->setCurrentText(0);
+    camera_status = CameraStatus::UNDEFINED;
     last_joy_sidebutton = 0;
     elap_timer.start();
 }
 void MainWindow::cameraStreamChanged(int v)
 {
+    qDebug() << "Starting stream.";
     //camera.set_stream();
     camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
 }
-
+void MainWindow::newGSTCameraImage(guint8 *map,bool v)
+{
+    cv::Mat temp_mat = cv::Mat(cv::Size(640, 480+480/2), CV_8UC1, (char*)map);
+    cv::Mat result(480,640,3);
+    cv::cvtColor(temp_mat,result,CV_YUV2RGB_I420,3);
+    QImage rgb(result.size().width,result.size().height,QImage::Format_RGB888);
+    memcpy(rgb.scanLine(0), (unsigned char*)result.data, rgb.width() * rgb.height() * result.channels());
+    camera_image = rgb;
+}
 void MainWindow::newCameraImage(QImage img, bool v)
 {
-    rx_image_counter++;
-    double framerate = rx_image_counter/(elap_timer.elapsed()/1000.0);
-    QPainter p(&img);
-    p.setPen(QPen(Qt::green));
-    p.setFont(QFont("Times",12,QFont::Bold));
-    QString tempstr = "FPS: " + QString::number(framerate,'f',2);
-    p.drawText(540,400,80,15,Qt::AlignCenter,tempstr);
-    ui->iCameraView->setPixmap(QPixmap::fromImage(img));
+
+    if(camera_status == CameraStatus::AVAILABLE)
+    {
+        rx_image_counter++;
+    }
+    else
+    {
+        rx_image_counter = 0;
+        elap_timer.restart();
+    }
+    camera_image = img;
 
 }
+void MainWindow::update_cameraoverlay()
+{
+
+    if(camera_status == CameraStatus::AVAILABLE)
+    {
+
+        double framerate = rx_image_counter/(elap_timer.elapsed()/1000.0);
+        QPainter p(&camera_image);
+        p.setPen(QPen(Qt::green));
+        p.setFont(QFont("Times",12,QFont::Bold));
+        QString tempstr = "FPS: " + QString::number(framerate,'f',2);
+        p.drawText(540,400,80,15,Qt::AlignCenter,tempstr);
+
+        ui->iCameraView->setPixmap(QPixmap::fromImage(camera_image));
+    }
+
+}
+void MainWindow::newCameraStatus(uint8_t v)
+{
+    camera_status = v;
+}
+
 void MainWindow::controlGroupChanged(QString v)
 {
     for(std::size_t i = 0; i < controlgroups.size(); i++)
@@ -435,6 +476,8 @@ void MainWindow::maintabChanged()
     {
 
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        disconnect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
+        connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
         if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_JOYSTICK)
         {
             disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
@@ -452,10 +495,12 @@ void MainWindow::maintabChanged()
     }
     else if(ui->tabWidget->currentIndex() == OPERATION_TAB)
     {
+        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
+        connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
 
     }
 }

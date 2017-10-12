@@ -42,7 +42,8 @@ INCLUDEPATH += /usr/include/glib-2.0/ \
                /usr/lib/x86_64-linux-gnu/glib-2.0/include/ \
                /usr/include/gstreamer-1.0/ \
                /usr/include/glib-2.0 \
-                /home/robot/other_packages/qt-gstreamer-1.2.0/install/include/
+                /home/robot/other_packages/qt-gstreamer-1.2.0/install/include/ \
+                /usr/include/c++/4.8/bits/
 
 SOURCES += main.cpp\
         mainwindow.cpp \

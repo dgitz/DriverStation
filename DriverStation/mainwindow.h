@@ -26,9 +26,11 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <linux/joystick.h>
 #include "camera.h"
+#include <linux/joystick.h>
 
+#include <gst/app/gstappsink.h>
+#include <glib.h>
 
 
 #define JOY_X_AXIS 0
@@ -118,6 +120,9 @@ public slots:
     void bTuningDReset_pressed();
 
     void newCameraImage(QImage,bool);
+    void newGSTCameraImage(guint8* map,bool);
+    void newCameraStatus(uint8_t);
+    void update_cameraoverlay();
 
 
 signals:
@@ -191,6 +196,8 @@ private:
     std::vector<Port> ports;
 
     quint64 rx_image_counter;
+    uint8_t camera_status;
+    QImage camera_image;
 
     //QLabel iRouterActive;
 
