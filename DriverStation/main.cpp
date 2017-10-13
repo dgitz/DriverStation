@@ -1,15 +1,6 @@
 #include "mainwindow.h"
 #include <QApplication>
-#include <QGlib/Error>
-#include <QGlib/Connect>
-#include <QGst/Init>
-#include <QGst/Bus>
-#include <QGst/Pipeline>
-#include <QGst/Parse>
-#include <QGst/Message>
-#include <QGst/Utils/ApplicationSink>
-#include <QGst/Utils/ApplicationSource>
-#include <QGst/ElementFactory>
+
 
 
 

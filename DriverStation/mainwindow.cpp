@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     current_axis_id = -1;
     calibrating = false;
 
-    myUDPTransmitter.set_RC_server(QString::fromStdString(Rover_IPAddress));
+    myUDPTransmitter.set_RC_server(QString::fromStdString(ROS_Server_IPAddress));
 
     myUDPReceiver.Start();
     myTCPReceiver.Start();
@@ -263,14 +263,14 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->cbCameraStreamChooser->addItem(tempstr);
     }
     ui->cbCameraStreamChooser->setCurrentText(0);
+    ui->tabWidget->setCurrentIndex(OPERATION_TAB);
+    connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
     camera_status = CameraStatus::UNDEFINED;
     last_joy_sidebutton = 0;
     elap_timer.start();
 }
 void MainWindow::cameraStreamChanged(int v)
 {
-    qDebug() << "Starting stream.";
-    //camera.set_stream();
     camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
 }
 void MainWindow::newGSTCameraImage(guint8 *map,bool v)
@@ -310,6 +310,10 @@ void MainWindow::update_cameraoverlay()
         QString tempstr = "FPS: " + QString::number(framerate,'f',2);
         p.drawText(540,400,80,15,Qt::AlignCenter,tempstr);
 
+        ui->iCameraView->setPixmap(QPixmap::fromImage(camera_image));
+    }
+    else
+    {
         ui->iCameraView->setPixmap(QPixmap::fromImage(camera_image));
     }
 

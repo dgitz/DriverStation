@@ -19,10 +19,10 @@ TEMPLATE = app
 
 
 CONFIG+=link_pkgconfig
-PKGCONFIG+=Qt5GStreamer-1.0
+#PKGCONFIG+=Qt5GStreamer-1.0
 
-INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
-LIBS += -L$$QWTPATH/lib -lQt5GStreamer-1.0 -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0
+#INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
+LIBS += -L$$QWTPATH/lib  -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0 #-lQt5GStreamer-1.0
 INCLUDEPATH += /usr/local/include/opencv2
 LIBS += -L/usr/local/lib \
 -lopencv_core \

@@ -3,11 +3,11 @@
 #include "cameraworker.h"
 #include <gst/app/gstappsink.h>
 #include <glib.h>
-#include <QGst/Init>
-#include <QGst/Pipeline>
-#include <QGst/ElementFactory>
-#include <QGst/Ui/GraphicsVideoSurface>
-#include <QGst/Ui/GraphicsVideoWidget>
+//#include <QGst/Init>
+//#include <QGst/Pipeline>
+//#include <QGst/ElementFactory>
+//#include <QGst/Ui/GraphicsVideoSurface>
+//#include <QGst/Ui/GraphicsVideoWidget>
 
 
 
