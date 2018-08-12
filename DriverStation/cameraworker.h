@@ -28,4 +28,4 @@ protected:
             std::string ipaddress;
             uint32_t port;
 };
-#endif CAMERAWORKER
+#endif

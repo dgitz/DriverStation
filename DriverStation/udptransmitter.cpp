@@ -82,6 +82,7 @@ bool UDPTransmitter::send_ArmControl_0xAB26(int device,int axis1,int axis2,int a
                                                              button1,button2,button3,button4,button5,button6);
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     ArmControl_AB26_timer.restart();
+    return true;
     //qDebug() << "Send AB26 to" << RC_Server << " : " << buffer << endl;
 }
 
@@ -98,6 +99,7 @@ bool UDPTransmitter::send_RemoteControl_0xAB10(quint64 timestamp,int axis1,int a
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     //qDebug() << "Send AB10 to" << RC_Server << " : " << buffer << endl;
     RemoteControl_AB10_timer.restart();
+    return true;
 }
 bool UDPTransmitter::send_Command_0xAB02(int command,int option1,int option2,int option3, std::string commandtext, std::string description)
 {
@@ -109,6 +111,7 @@ bool UDPTransmitter::send_Command_0xAB02(int command,int option1,int option2,int
     QString buffer = udpmessagehandler->encode_CommandUDP(command,option1,option2,option3,commandtext,description);
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     Command_AB02_timer.restart();
+    return true;
 }
 bool UDPTransmitter::send_Heartbeat_0xAB31(std::string hostname,uint64_t t,uint64_t t2)
 {
@@ -120,6 +123,7 @@ bool UDPTransmitter::send_Heartbeat_0xAB31(std::string hostname,uint64_t t,uint6
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     //qDebug() << "Send AB31 to" << RC_Server << " : " << buffer << endl;
     Heartbeat_AB31_timer.restart();
+    return true;
 }
 bool UDPTransmitter::send_TuneControlGroup_0xAB39(std::string name, std::string type, double v1, double v2, double v3,int maxvalue,int minvalue,int defaultvalue)
 {
@@ -131,4 +135,5 @@ bool UDPTransmitter::send_TuneControlGroup_0xAB39(std::string name, std::string 
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     //qDebug() << "Send AB31 to" << RC_Server << " : " << buffer << endl;
     TuneControlGroup_0A39_timer.restart();
+    return true;
 }
