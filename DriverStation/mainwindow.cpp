@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //ResourceChartView->setRenderHint(QPainter::Antialiasing);
     ui->setupUi(this);
     ui->treeCommMessage->setColumnCount(4);
-     ui->treeCommMessage->setHeaderLabels(QStringList() << "ID" << "Msg" << "RX" << "TX");
+    ui->treeCommMessage->setHeaderLabels(QStringList() << "ID" << "Msg" << "RX" << "TX");
 
     //QMainWindow window;
     // window.setCentralWidget(ResourceChartView);
@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_estop(EStop)),this,SLOT(update_estop(EStop)));
 
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
-   connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
+    connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
 
 
     timer_10ms = new QTimer(this);
@@ -137,7 +137,6 @@ MainWindow::MainWindow(QWidget *parent) :
     timer_5000ms->start(5000);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
 
-
     joy_axis = NULL;
     joy_button = NULL;
     joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
@@ -155,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "f: " << joy_fd;
         int num_axes;
         int num_buttons;
-        char name[80];
+        char joy_name[80];
         num_axes = 0;
         num_buttons = 0;
         joy_axis = NULL;
@@ -172,12 +171,12 @@ MainWindow::MainWindow(QWidget *parent) :
         else
         {
             joystick_available = true;
-            ioctl(joy_fd,JSIOCGNAME(80),&name);
+            ioctl(joy_fd,JSIOCGNAME(80),&joy_name);
             joy_axis = (double *)calloc(num_axes,sizeof(double));
             joy_button = (char *)calloc(num_buttons,sizeof(char));
-            current_joystickname = name;
+            current_joystickname = joy_name;
             fcntl(joy_fd,F_SETFL,O_NONBLOCK);
-            qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
+            qDebug() << "Name: " << joy_name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
             joystickcalibrationfile_path = "/home/robot/config/JoystickCalibration.xml";
             QFileInfo check_file(joystickcalibrationfile_path);
             if(check_file.exists() && check_file.isFile())
@@ -190,16 +189,16 @@ MainWindow::MainWindow(QWidget *parent) :
                 create_emptyjoystickcalibrationfile();
             }
             Joystick joy;
-            bool found = lookup_joystick(name,joy);
+            bool found = lookup_joystick(joy_name,joy);
             if(found == true)
             {
-                qDebug() << "Found Joystick: " << QString::fromStdString(name) << " in Cal File";
+                qDebug() << "Found Joystick: " << QString::fromStdString(joy_name) << " in Cal File";
                 joystick = joy;
             }
             else
             {
-                qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
-                bool create = create_defaultjoystick(name,num_axes);
+                qDebug() << "Didn't find Joystick: " << QString::fromStdString(joy_name) << " in Cal File";
+                bool create = create_defaultjoystick(joy_name,num_axes);
             }
             connect(timer_50ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
         }
@@ -273,6 +272,27 @@ MainWindow::MainWindow(QWidget *parent) :
     last_joy_sidebutton = 0;
     elap_timer.start();
 }
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    switch(event->key())
+    {
+    case Qt::Key_F1:
+        if(armdisarm_state == ARMEDSTATUS_ARMED)
+        {
+            armdisarm_command = ROVERCOMMAND_DISARM;
+        }
+        else if(armdisarm_state == ARMEDSTATUS_DISARMED)
+        {
+            armdisarm_command = ROVERCOMMAND_ARM;
+        }
+        send_Arm_Command_message(armdisarm_command);
+        break;
+    default:
+        break;
+    }
+}
+
 void MainWindow::cameraStreamChanged(int v)
 {
     camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);

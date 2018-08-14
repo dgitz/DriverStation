@@ -108,4 +108,3 @@ struct ControlGroup
     Gain gain;
 };
 #endif
-

@@ -29,9 +29,11 @@
 #include <iostream>
 #include "camera.h"
 #include <linux/joystick.h>
+#include <QtGamepad>
 
 #include <gst/app/gstappsink.h>
 #include <glib.h>
+
 
 
 #define JOY_X_AXIS 0
@@ -139,6 +141,7 @@ signals:
     void new_devicemessage(Device);
 
 private:
+    void keyPressEvent(QKeyEvent * event);
     void init_udpmessageinfo();
     std::vector<UDPMessageInfo> udp_messages;
     bool new_udpmsgreceived(std::string id);
@@ -193,6 +196,7 @@ private:
 
     int joy_fd;
     double *joy_axis;
+
     char *joy_button;
     QTimer *timer_10ms;
     QTimer *timer_50ms;
