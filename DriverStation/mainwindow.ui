@@ -37,9 +37,9 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
-    <widget class="QWidget" name="tab">
+    <widget class="QWidget" name="tabCalibration">
      <attribute name="title">
       <string>Calibration</string>
      </attribute>
@@ -471,7 +471,7 @@
          <rect>
           <x>320</x>
           <y>280</y>
-          <width>254</width>
+          <width>269</width>
           <height>181</height>
          </rect>
         </property>
@@ -1128,7 +1128,7 @@
       </widget>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_2">
+    <widget class="QWidget" name="tabOperation">
      <attribute name="title">
       <string>Operation</string>
      </attribute>
@@ -1173,6 +1173,26 @@
       <property name="currentText">
        <string/>
       </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tabDiagnostic">
+     <attribute name="title">
+      <string>Diagnostic</string>
+     </attribute>
+     <widget class="QTreeWidget" name="treeCommMessage">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>321</width>
+        <height>271</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
      </widget>
     </widget>
    </widget>

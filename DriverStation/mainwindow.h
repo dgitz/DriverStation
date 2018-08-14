@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QProcess>
 #include <QTreeWidget>
+#include <QDial>
 #include <QtCharts>
 #include <QLineSeries>
 #include <udpreceiver.h>
@@ -28,9 +29,11 @@
 #include <iostream>
 #include "camera.h"
 #include <linux/joystick.h>
+#include <QtGamepad>
 
 #include <gst/app/gstappsink.h>
 #include <glib.h>
+
 
 
 #define JOY_X_AXIS 0
@@ -43,6 +46,7 @@
 #define JOY_BUTTON_SIDE 3
 #define CALIBRATION_TAB 0
 #define OPERATION_TAB 1
+#define DIAGNOSTIC_TAB 2
 #define CALIBRATIONTAB_JOYSTICK 0
 #define CALIBRATIONTAB_TUNING 1
 
@@ -59,7 +63,13 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     std::string get_level_string(int);
-
+    struct UDPMessageInfo
+    {
+        std::string id;
+        std::string name;
+        uint64_t rx_count;
+        uint64_t tx_count;
+    };
 
 
 public slots:
@@ -95,6 +105,7 @@ public slots:
     void update_OperationPanel();
     void update_CalibrationGroup();
     void update_TuningPanel();
+    void update_DiagnosticTab();
     void calibrate_Axis(const int);
     void calibrate_XAxis(const bool);
     void calibrate_YAxis(const bool);
@@ -130,6 +141,11 @@ signals:
     void new_devicemessage(Device);
 
 private:
+    void keyPressEvent(QKeyEvent * event);
+    void init_udpmessageinfo();
+    std::vector<UDPMessageInfo> udp_messages;
+    bool new_udpmsgreceived(std::string id);
+    bool new_udpmsgsent(std::string id);
     QElapsedTimer elap_timer;
     Ui::MainWindow *ui;
     UDPReceiver myUDPReceiver;
@@ -180,6 +196,7 @@ private:
 
     int joy_fd;
     double *joy_axis;
+
     char *joy_button;
     QTimer *timer_10ms;
     QTimer *timer_50ms;

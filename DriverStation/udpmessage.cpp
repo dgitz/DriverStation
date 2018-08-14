@@ -1,5 +1,5 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2017-09-14 06:11:37.654501***/
+/***Created on:2018-08-06 20:28:18.107400***/
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -126,6 +126,7 @@ QString UDPMessageHandler::encode_ArmControlUDP(int device,int axis1,int axis2,i
 }
 int UDPMessageHandler::decode_Arm_StatusUDP(QList<QByteArray> items,int* Status)
 {
+
 	if(items.size() != 2){ return 0; }
 	*Status=(int)items.at(1).toInt();
 	return 1;
@@ -186,4 +187,14 @@ QString UDPMessageHandler::encode_TuneControlGroupUDP(std::string ControlGroupNa
 	tempstr.append(",");
 	tempstr.append(QString::number(defaultvalue));
 	return tempstr;
+}
+int UDPMessageHandler::decode_FirmwareUDP(QList<QByteArray> items,std::string* NodeName,std::string* Description,int* MajorRelease,int* MinorRelease,int* BuildNumber)
+{
+	if(items.size() != 6){ return 0; }
+	*NodeName=items.at(1).toStdString();
+	*Description=items.at(2).toStdString();
+	*MajorRelease=(int)items.at(3).toInt();
+	*MinorRelease=(int)items.at(4).toInt();
+	*BuildNumber=(int)items.at(5).toInt();
+	return 1;
 }

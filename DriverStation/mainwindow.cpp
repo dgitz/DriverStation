@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         kill_application(true);
     }
+    init_udpmessageinfo();
 
 
 
@@ -58,7 +59,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //ResourceChart->setTitle("Resourcesd(ResourceChart);
     //ResourceChartView->setRenderHint(QPainter::Antialiasing);
     ui->setupUi(this);
-
+    ui->treeCommMessage->setColumnCount(4);
+    ui->treeCommMessage->setHeaderLabels(QStringList() << "ID" << "Msg" << "RX" << "TX");
 
     //QMainWindow window;
     // window.setCentralWidget(ResourceChartView);
@@ -89,12 +91,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
+
+
     timer_10ms = new QTimer(this);
     timer_50ms = new QTimer(this);
     timer_100ms = new QTimer(this);
     timer_1000ms = new QTimer(this);
     timer_5000ms = new QTimer(this);
-   // connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
+    // connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_devicelist()));
     connect(timer_10ms,SIGNAL(timeout()),this,SLOT(update_commstatus()));
 
 
@@ -102,7 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(maintabChanged()));
     connect(ui->CalibrationSubTab,SIGNAL(currentChanged(int)),this,SLOT(calibrationtabChanged()));
-   // connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
+    // connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_devicelistviewer()));
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(send_Heartbeat_message()));
 
     connect(ui->bXAxisCal,SIGNAL(clicked(bool)),SLOT(calibrate_XAxis(bool)));
@@ -133,7 +137,6 @@ MainWindow::MainWindow(QWidget *parent) :
     timer_5000ms->start(5000);
     for(int i = 0; i < 4; i++) { buttons.push_back(0); }
 
-
     joy_axis = NULL;
     joy_button = NULL;
     joy_fd = open("/dev/input/js0", O_RDONLY /*| O_NONBLOCK*/);
@@ -151,7 +154,7 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "f: " << joy_fd;
         int num_axes;
         int num_buttons;
-        char name[80];
+        char joy_name[80];
         num_axes = 0;
         num_buttons = 0;
         joy_axis = NULL;
@@ -168,12 +171,12 @@ MainWindow::MainWindow(QWidget *parent) :
         else
         {
             joystick_available = true;
-            ioctl(joy_fd,JSIOCGNAME(80),&name);
+            ioctl(joy_fd,JSIOCGNAME(80),&joy_name);
             joy_axis = (double *)calloc(num_axes,sizeof(double));
             joy_button = (char *)calloc(num_buttons,sizeof(char));
-            current_joystickname = name;
+            current_joystickname = joy_name;
             fcntl(joy_fd,F_SETFL,O_NONBLOCK);
-            qDebug() << "Name: " << name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
+            qDebug() << "Name: " << joy_name << " Axis's: " << num_axes << " Buttons: " << num_buttons;
             joystickcalibrationfile_path = "/home/robot/config/JoystickCalibration.xml";
             QFileInfo check_file(joystickcalibrationfile_path);
             if(check_file.exists() && check_file.isFile())
@@ -186,16 +189,16 @@ MainWindow::MainWindow(QWidget *parent) :
                 create_emptyjoystickcalibrationfile();
             }
             Joystick joy;
-            bool found = lookup_joystick(name,joy);
+            bool found = lookup_joystick(joy_name,joy);
             if(found == true)
             {
-                qDebug() << "Found Joystick: " << QString::fromStdString(name) << " in Cal File";
+                qDebug() << "Found Joystick: " << QString::fromStdString(joy_name) << " in Cal File";
                 joystick = joy;
             }
             else
             {
-                qDebug() << "Didn't find Joystick: " << QString::fromStdString(name) << " in Cal File";
-                bool create = create_defaultjoystick(name,num_axes);
+                qDebug() << "Didn't find Joystick: " << QString::fromStdString(joy_name) << " in Cal File";
+                bool create = create_defaultjoystick(joy_name,num_axes);
             }
             connect(timer_50ms,SIGNAL(timeout()),this,SLOT(read_joystick()));
         }
@@ -269,6 +272,27 @@ MainWindow::MainWindow(QWidget *parent) :
     last_joy_sidebutton = 0;
     elap_timer.start();
 }
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    switch(event->key())
+    {
+    case Qt::Key_F1:
+        if(armdisarm_state == ARMEDSTATUS_ARMED)
+        {
+            armdisarm_command = ROVERCOMMAND_DISARM;
+        }
+        else if(armdisarm_state == ARMEDSTATUS_DISARMED)
+        {
+            armdisarm_command = ROVERCOMMAND_ARM;
+        }
+        send_Arm_Command_message(armdisarm_command);
+        break;
+    default:
+        break;
+    }
+}
+
 void MainWindow::cameraStreamChanged(int v)
 {
     camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
@@ -336,7 +360,8 @@ void MainWindow::controlGroupChanged(QString v)
 
 void MainWindow::update_estop(EStop estop)
 {
-   // qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
+    new_udpmsgreceived(UDP_EStop_ID);
+    // qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
     if(estop.state == ESTOP_ACTIVATED)
     {
         ui->tEStopState->setText("EMERGENCY STOPPED!");
@@ -481,6 +506,8 @@ void MainWindow::maintabChanged()
 
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
         disconnect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_DiagnosticTab()));
+        disconnect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
         connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
         if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_JOYSTICK)
         {
@@ -503,9 +530,18 @@ void MainWindow::maintabChanged()
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_DiagnosticTab()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
         connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
 
+    }
+    else if(ui->tabWidget->currentIndex() == DIAGNOSTIC_TAB)
+    {
+        disconnect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_TuningPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationPanel()));
+        disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_DiagnosticTab()));
     }
 }
 
@@ -883,6 +919,7 @@ void MainWindow::send_Heartbeat_message()
     QDateTime currentdatetime = QDateTime::currentDateTime();
     quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
     quint64 unixtime2 = unixtime + 100; //Should be 100 mS into the future
+    new_udpmsgsent(UDP_Heartbeat_ID);
     myUDPTransmitter.send_Heartbeat_0xAB31(DeviceName.toStdString(),unixtime,unixtime2);
 }
 
@@ -891,6 +928,7 @@ void MainWindow::send_RC_message(int a)
 }
 void MainWindow::send_Arm_Command_message(int a)
 {
+    new_udpmsgsent(UDP_Command_ID);
     myUDPTransmitter.send_Command_0xAB02(armdisarm_command,ROVERCOMMAND_NONE,ROVERCOMMAND_NONE,ROVERCOMMAND_NONE,"","");
 }
 
@@ -925,6 +963,7 @@ void MainWindow::clearfilter_messageviewer()
 }
 void MainWindow::update_armeddisarmed_text(int value)
 {
+    new_udpmsgreceived(UDP_Arm_Status_ID);
     armdisarm_state = value;
     QString tempstr;
     switch (value)
@@ -990,11 +1029,12 @@ qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
                 int stop = 1;
             }
             out = (qint32)(scale_value((double)invalue,(double)joystick.axes.at(i).neutral,-32768.0,32768.0,
-                                      (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0)));
+                                       (double)joystick.axes.at(i).min,(double)joystick.axes.at(i).max,(double)(joystick.axes.at(i).deadband*32768.0/100.0)));
             return out;
 
         }
     }
+    return out;
 }
 double MainWindow::scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband)
 {
@@ -1030,6 +1070,40 @@ void MainWindow::update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int
         }
     }
 }
+void MainWindow::update_DiagnosticTab()
+{
+    //ui->treeCommMessage->setHeaderLabels(QStringList() << "ID" << "Msg" << "RX" << "TX");
+    for(std::size_t i = 0; i < udp_messages.size(); i++)
+    {
+        bool add_new_entry = true;
+        if((udp_messages.at(i).rx_count > 0 ) or (udp_messages.at(i).tx_count > 0))
+        {
+            QTreeWidgetItemIterator it(ui->treeCommMessage);
+            while (*it)
+            {
+                if ((*it)->text(0)==QString::fromStdString(udp_messages.at(i).id))
+                {
+                    add_new_entry = false;
+                    (*it)->setText(1,QString::fromStdString(udp_messages.at(i).name));
+                    (*it)->setText(2,QString::number(udp_messages.at(i).rx_count));
+                    (*it)->setText(3,QString::number(udp_messages.at(i).tx_count));
+                }
+                ++it;
+            }
+            if(add_new_entry == true)
+            {
+                QTreeWidgetItem *treeItem = new QTreeWidgetItem(ui->treeCommMessage);
+                treeItem->setText(0,QString::fromStdString(udp_messages.at(i).id));
+            }
+        }
+
+    }
+    for(int i = 0; i < ui->treeCommMessage->columnCount();i++)
+    {
+        ui->treeCommMessage->resizeColumnToContents(i);
+    }
+}
+
 void MainWindow::update_OperationPanel()
 {
     if(joystick_available == 1)
@@ -1048,6 +1122,8 @@ void MainWindow::update_OperationPanel()
 
         QDateTime currentdatetime = QDateTime::currentDateTime();
         quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+
+        new_udpmsgsent(UDP_RemoteControl_ID);
         myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
                                                    x_out,
                                                    y_out,
@@ -1119,6 +1195,8 @@ void MainWindow::update_CalibrationPanel()
         }
         QDateTime currentdatetime = QDateTime::currentDateTime();
         quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        new_udpmsgsent(UDP_RemoteControl_ID);
+
         myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
                                                    x_out,
                                                    y_out,
@@ -1136,6 +1214,7 @@ void MainWindow::update_CalibrationPanel()
                                                    0,
                                                    0,
                                                    0);
+
     }
 }
 void MainWindow::update_TuningPanel()
@@ -1154,13 +1233,15 @@ void MainWindow::update_TuningPanel()
     ui->lTuningMaxValue->setText(QString::number(ui->hsTuningMaxValue->value()));
     ui->lTuningMinValue->setText(QString::number(ui->hsTuningMinValue->value()));
     ui->lTuningDefaultValue->setText(QString::number(ui->hsTuningDefaultValue->value()));
+    new_udpmsgsent(UDP_TuneControlGroup_ID);
     myUDPTransmitter.send_TuneControlGroup_0xAB39(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D,
-                                           ui->hsTuningMaxValue->value(),ui->hsTuningMinValue->value(),ui->hsTuningDefaultValue->value());
+                                                  ui->hsTuningMaxValue->value(),ui->hsTuningMinValue->value(),ui->hsTuningDefaultValue->value());
     update_OperationPanel();
 }
 
 void MainWindow::update_devicelist()
 {
+    new_udpmsgreceived(UDP_Device_ID);
     for(int i = 0; i < DeviceList.size();i++)
     {
         for(int j = 0; j < DeviceList.at(i).Nodes.size();j++)
@@ -1227,8 +1308,37 @@ void MainWindow::update_devicelistviewer()
 
 
 }
+bool MainWindow::new_udpmsgreceived(std::string id)
+{
+    bool found = false;
+    for(std::size_t i = 0; i < udp_messages.size(); i++)
+    {
+        if(udp_messages.at(i).id == id)
+        {
+            udp_messages.at(i).rx_count++;
+            found = true;
+        }
+    }
+    return found;
+}
+
+bool MainWindow::new_udpmsgsent(std::string id)
+{
+    bool found = false;
+    for(std::size_t i = 0; i < udp_messages.size(); i++)
+    {
+        if(udp_messages.at(i).id == id)
+        {
+            udp_messages.at(i).tx_count++;
+            found = true;
+        }
+    }
+    return found;
+}
+
 void MainWindow::update_messageviewer(const Diagnostic &diag)
 {
+    new_udpmsgreceived(UDP_Diagnostic_ID);
     if(diag.Level > INFO)
     {
         QString tempstr = QTime::currentTime().toString() + " " + QString::fromStdString(diag.Description);
@@ -1373,6 +1483,7 @@ bool MainWindow::create_defaultjoystick(QString name,int numaxes)
         outfile << new_file.at(i);
     }
     outfile.close();
+    return true;
 
 }
 int MainWindow::convert_pingms_tossi(int v)
@@ -1406,93 +1517,93 @@ void MainWindow::read_ControlGroupFile()
 {
     QFile file("/home/robot/config/ControlGroup.xml");
     if(!file.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cannot read file" << file.errorString();
-            return;
+        qDebug() << "Cannot read file" << file.errorString();
+        return;
     }
     QXmlStreamReader reader(&file);
     if (reader.readNextStartElement())
     {
-            if (reader.name() == "ControlGroupFile")
+        if (reader.name() == "ControlGroupFile")
+        {
+            while(reader.readNextStartElement())
             {
-                while(reader.readNextStartElement())
+                if(reader.name() == "ControlGroupList")
                 {
-                    if(reader.name() == "ControlGroupList")
+                    while(reader.readNextStartElement())
                     {
-                        while(reader.readNextStartElement())
+                        if(reader.name() == "ControlGroup")
                         {
-                            if(reader.name() == "ControlGroup")
+                            ControlGroup cg;
+
+                            while(reader.readNextStartElement())
                             {
-                                ControlGroup cg;
-
-                                while(reader.readNextStartElement())
+                                qDebug() << "name: " << reader.name();
+                                if(reader.name() == "Name")
                                 {
-                                    qDebug() << "name: " << reader.name();
-                                    if(reader.name() == "Name")
-                                    {
 
-                                        cg.name = reader.readElementText();
-                                    }
-                                    else if(reader.name() == "Command")
+                                    cg.name = reader.readElementText();
+                                }
+                                else if(reader.name() == "Command")
+                                {
+                                    reader.skipCurrentElement();
+                                }
+                                else if(reader.name() == "Sensor")
+                                {
+                                    reader.skipCurrentElement();
+                                }
+                                else if(reader.name() == "Output")
+                                {
+                                    reader.skipCurrentElement();
+                                }
+                                else if(reader.name() == "Gain")
+                                {
+                                    while(reader.readNextStartElement())
                                     {
-                                        reader.skipCurrentElement();
-                                    }
-                                    else if(reader.name() == "Sensor")
-                                    {
-                                        reader.skipCurrentElement();
-                                    }
-                                    else if(reader.name() == "Output")
-                                    {
-                                        reader.skipCurrentElement();
-                                    }
-                                    else if(reader.name() == "Gain")
-                                    {
-                                        while(reader.readNextStartElement())
+                                        if(reader.name() == "Type")
                                         {
-                                            if(reader.name() == "Type")
-                                            {
-                                                cg.gain.type = reader.readElementText();
-                                            }
-                                            else if(reader.name() == "Proportional")
-                                            {
-                                                cg.gain.P = reader.readElementText().toDouble();
-                                                cg.gain.P_default = cg.gain.P;
-                                                cg.gain.P_min = cg.gain.P-1.0;
-                                                cg.gain.P_max = cg.gain.P+1.0;
-                                            }
-                                            else if(reader.name() == "Integral")
-                                            {
-                                                cg.gain.I = reader.readElementText().toDouble();
-                                                cg.gain.I_default = cg.gain.I;
-                                                cg.gain.I_min = cg.gain.I-1.0;
-                                                cg.gain.I_max = cg.gain.I+1.0;
-                                            }
-                                            else if(reader.name() == "Derivative")
-                                            {
-                                                cg.gain.D = reader.readElementText().toDouble();
-                                                cg.gain.D_default = cg.gain.D;
-                                                cg.gain.D_min = cg.gain.D-1.0;
-                                                cg.gain.D_max = cg.gain.D+1.0;
-                                            }
+                                            cg.gain.type = reader.readElementText();
+                                        }
+                                        else if(reader.name() == "Proportional")
+                                        {
+                                            cg.gain.P = reader.readElementText().toDouble();
+                                            cg.gain.P_default = cg.gain.P;
+                                            cg.gain.P_min = cg.gain.P-1.0;
+                                            cg.gain.P_max = cg.gain.P+1.0;
+                                        }
+                                        else if(reader.name() == "Integral")
+                                        {
+                                            cg.gain.I = reader.readElementText().toDouble();
+                                            cg.gain.I_default = cg.gain.I;
+                                            cg.gain.I_min = cg.gain.I-1.0;
+                                            cg.gain.I_max = cg.gain.I+1.0;
+                                        }
+                                        else if(reader.name() == "Derivative")
+                                        {
+                                            cg.gain.D = reader.readElementText().toDouble();
+                                            cg.gain.D_default = cg.gain.D;
+                                            cg.gain.D_min = cg.gain.D-1.0;
+                                            cg.gain.D_max = cg.gain.D+1.0;
                                         }
                                     }
                                 }
+                            }
 
-                                controlgroups.push_back(cg);
-                            }
-                            else
-                            {
-                                reader.skipCurrentElement();
-                            }
+                            controlgroups.push_back(cg);
+                        }
+                        else
+                        {
+                            reader.skipCurrentElement();
                         }
                     }
-                    else
-                    {
-                        reader.skipCurrentElement();
-                    }
+                }
+                else
+                {
+                    reader.skipCurrentElement();
                 }
             }
-            else
-                reader.raiseError(QObject::tr("Incorrect file"));
+        }
+        else
+            reader.raiseError(QObject::tr("Incorrect file"));
     }
     for(std::size_t i = 0; i < controlgroups.size(); i++)
     {
@@ -1508,8 +1619,8 @@ bool MainWindow::load_DeviceFile()
 {
     QFile file("/home/robot/config/DeviceFile.xml");
     if(!file.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cannot read DeviceFile.xml" << file.errorString();
-            return false;
+        qDebug() << "Cannot read DeviceFile.xml" << file.errorString();
+        return false;
     }
     QXmlStreamReader reader(&file);
     if (reader.readNextStartElement())
@@ -1600,12 +1711,101 @@ bool MainWindow::load_DeviceFile()
 
     return true;
 }
+void MainWindow::init_udpmessageinfo()
+{
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Command_ID;
+        msg.name = "Command";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_RemoteControl_ID;
+        msg.name = "Remote Control";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Resource_ID;
+        msg.name = "Resource Info";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Diagnostic_ID;
+        msg.name = "Diagnostic";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Device_ID;
+        msg.name = "Device Info";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_ArmControl_ID;
+        msg.name = "Arm Control";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Arm_Status_ID;
+        msg.name = "Arm Status";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Heartbeat_ID;
+        msg.name = "Heartbeat";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_FindTarget_ID;
+        msg.name = "Find Target";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Power_ID;
+        msg.name = "Power";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_EStop_ID;
+        msg.name = "EStop";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_TuneControlGroup_ID;
+        msg.name = "Tune Control Group";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_Firmware_ID;
+        msg.name = "Firmware";
+        udp_messages.push_back(msg);
+    }
+
+
+    for(std::size_t i = 0; i < udp_messages.size(); i++)
+    {
+        udp_messages.at(i).rx_count = 0;
+        udp_messages.at(i).tx_count = 0;
+    }
+}
+
 bool MainWindow::load_MisConfigFile()
 {
     QFile file("/home/robot/config/MiscConfig.xml");
     if(!file.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cannot read MiscConfig.xml" << file.errorString();
-            return false;
+        qDebug() << "Cannot read MiscConfig.xml" << file.errorString();
+        return false;
     }
     QXmlStreamReader reader(&file);
     if (reader.readNextStartElement())
