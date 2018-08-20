@@ -1,5 +1,5 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2018-08-06 20:28:18.107400***/
+/***Created on:2018-08-19 07:10:30.212434***/
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -126,7 +126,6 @@ QString UDPMessageHandler::encode_ArmControlUDP(int device,int axis1,int axis2,i
 }
 int UDPMessageHandler::decode_Arm_StatusUDP(QList<QByteArray> items,int* Status)
 {
-
 	if(items.size() != 2){ return 0; }
 	*Status=(int)items.at(1).toInt();
 	return 1;
