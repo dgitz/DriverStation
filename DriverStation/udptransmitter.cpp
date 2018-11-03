@@ -108,6 +108,7 @@ bool UDPTransmitter::send_Command_0xAB02(int command,int option1,int option2,int
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
     //std::string sendstr("123,456");
+    qDebug() << command;
     QString buffer = udpmessagehandler->encode_CommandUDP(command,option1,option2,option3,commandtext,description);
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     Command_AB02_timer.restart();
