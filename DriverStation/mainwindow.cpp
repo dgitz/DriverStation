@@ -1,16 +1,16 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-//#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc.hpp>
-//#include <opencv2/imgcodecs.hpp>
-
-//using namespace cv;
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include "cv.h"
+using namespace cv;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.111";
+    ROS_Server_IPAddress = "10.0.0.110";
     DSRouter_IPAddress = "10.0.0.3";
     joystick_available = false;
     Rover_IPAddress = "10.0.0.109";
@@ -87,7 +87,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
-    connect(&myUDPReceiver,SIGNAL(new_estop(EStop)),this,SLOT(update_estop(EStop)));
 
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
@@ -355,33 +354,6 @@ void MainWindow::controlGroupChanged(QString v)
         {
             current_cg = controlgroups.at(i);
         }
-    }
-}
-
-void MainWindow::update_estop(EStop estop)
-{
-    new_udpmsgreceived(UDP_EStop_ID);
-    // qDebug() << "Got: " << QString::fromStdString(estop.source) << estop.state;
-    if(estop.state == ESTOP_ACTIVATED)
-    {
-        ui->tEStopState->setText("EMERGENCY STOPPED!");
-        ui->tEStopState->setStyleSheet("color: white;"
-                                       "background-color: red;"
-                                       "font: bold italic 36px;");
-    }
-    else if(estop.state == ESTOP_DISACTIVATED)
-    {
-        ui->tEStopState->setText("ESTOP OK");
-        ui->tEStopState->setStyleSheet("color: black;"
-                                       "background-color: white;"
-                                       "font: bold italic 36px;");
-    }
-    else
-    {
-        ui->tEStopState->setText("ESTOP\n NOT VALID");
-        ui->tEStopState->setStyleSheet("color: white;"
-                                       "background-color: red;"
-                                       "font: bold italic 36px;");
     }
 }
 
@@ -759,7 +731,6 @@ void MainWindow::update_CalibrationGroup()
 void MainWindow::update_commstatus()
 {
     qint64 time_sincelastcomm = myUDPReceiver.get_lastcomm();
-    qint64 time_sincelastcomm_EStop = myUDPReceiver.get_lastcomm_EStop();
     if(time_sincelastcomm > 5000)// mS
     {
         armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
@@ -771,15 +742,12 @@ void MainWindow::update_commstatus()
         ui->tEStopState->setText("LOST COMM!");
     }
 
-    else if((time_sincelastcomm < 3000) && (time_sincelastcomm_EStop > 5000))
+    else if((time_sincelastcomm < 3000))
     {
-        armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
-        armdisarm_command = ROVERCOMMAND_DISARM;
-        ui->bArmDisarm->setText("DISARMED\nCANNOT ARM");
         ui->tEStopState->setStyleSheet("color: black;"
                                        "background-color: orange;"
                                        "font: bold italic 36px;");
-        ui->tEStopState->setText("ESTOP\nNOT AVAILABLE!");
+        ui->tEStopState->setText("COMM OK");
     }
 
 }
@@ -1771,12 +1739,6 @@ void MainWindow::init_udpmessageinfo()
         UDPMessageInfo msg;
         msg.id = UDP_Power_ID;
         msg.name = "Power";
-        udp_messages.push_back(msg);
-    }
-    {
-        UDPMessageInfo msg;
-        msg.id = UDP_EStop_ID;
-        msg.name = "EStop";
         udp_messages.push_back(msg);
     }
     {

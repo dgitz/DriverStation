@@ -57,8 +57,8 @@ UDPReceiver::UDPReceiver(QWidget *parent)
     : QObject(parent)
 {
     udpmessagehandler = new UDPMessageHandler();
+    any_comm_recived = false;
     lastcomm_timer.restart();
-    lastcomm_EStop_timer.restart();
 }
 void UDPReceiver::Start()
 {
@@ -97,6 +97,7 @@ void UDPReceiver::processPendingDatagrams()
                 int state;
                 if(udpmessagehandler->decode_Arm_StatusUDP(items,&state))
                 {
+                    any_comm_recived = true;
                     lastcomm_timer.restart();
                     emit new_armedstatusmessage(state);
                 }
@@ -108,6 +109,7 @@ void UDPReceiver::processPendingDatagrams()
                 int system,subsystem,component,diagtype,diagmessage,level;
                 if(udpmessagehandler->decode_DiagnosticUDP(items,&devicename,&nodename,&system,&subsystem,&component,&diagtype,&level,&diagmessage,&description))
                 {
+                    any_comm_recived = true;
                     lastcomm_timer.restart();
                     Diagnostic newdiag;
                     newdiag.DeviceName = devicename;
@@ -128,6 +130,7 @@ void UDPReceiver::processPendingDatagrams()
                 std::string deviceparent,devicename,devicetype,architecture;
                 if(udpmessagehandler->decode_DeviceUDP(items,&deviceparent,&devicename,&devicetype,&architecture))
                 {
+                 any_comm_recived = true;
                     lastcomm_timer.restart();
                     Device newdevice;
                     newdevice.DeviceParent = deviceparent;
@@ -144,28 +147,13 @@ void UDPReceiver::processPendingDatagrams()
                 int ram,cpu;
                 if(udpmessagehandler->decode_ResourceUDP(items,&nodename,&ram,&cpu))
                 {
+                    any_comm_recived = true;
                     lastcomm_timer.restart();
                     Resource newresource;
                     newresource.NodeName = nodename;
                     newresource.ram_used_Mb = ram;
                     newresource.cpu_used_perc  = cpu;
                     emit new_resourcemessage(newresource);
-                }
-                break;
-            }
-            case ESTOP_ID:
-            {
-
-                std::string source;
-                int state;
-                if(udpmessagehandler->decode_EStopUDP(items,&source,&state))
-                {
-                    lastcomm_timer.restart();
-                    lastcomm_EStop_timer.restart();
-                    EStop newestop;
-                    newestop.source = source;
-                    newestop.state = state;
-                    emit new_estop(newestop);
                 }
                 break;
             }

@@ -1,8 +1,8 @@
 #include "camerastreamer.h"
 #include <vector>
 #include <stdio.h>
-#include <opencv2/imgproc.hpp>
-
+#include <opencv2/imgproc/imgproc.hpp>
+#include "cv.h"
 using namespace std;
 CameraStreamer::CameraStreamer(QObject *parent)
 {

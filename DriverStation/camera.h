@@ -6,7 +6,7 @@
 #include <QThread>
 #include <QTime>
 #include <QTimer>
-#include <gst/app/gstappsink.h>
+#include <gstreamer-1.0/gst/app/gstappsink.h>
 #include <glib.h>
 #include "camerastreamer.h"
 

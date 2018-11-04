@@ -23,7 +23,7 @@ CONFIG+=link_pkgconfig
 
 #INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
 LIBS += -L$$QWTPATH/lib  -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0 #-lQt5GStreamer-1.0
-INCLUDEPATH += /usr/local/include/opencv2
+INCLUDEPATH += /usr/local/include/opencv
 LIBS += -L/usr/local/lib \
 -lopencv_core \
 -lopencv_imgproc \
