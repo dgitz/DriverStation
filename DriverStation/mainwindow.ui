@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabCalibration">
      <attribute name="title">
@@ -1139,7 +1139,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>560</y>
+        <y>550</y>
         <width>831</width>
         <height>51</height>
        </rect>

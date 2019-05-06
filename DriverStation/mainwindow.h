@@ -75,6 +75,7 @@ public:
 public slots:
     void update_messageviewer(const Diagnostic &diag);
     void update_armeddisarmed_text(const int);
+    void update_resource(const Resource &resource);
     void kill_application(const bool);
     void stop_system(const bool);
     void launch_system(const bool);

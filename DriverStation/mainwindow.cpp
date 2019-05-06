@@ -10,10 +10,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.110";
-    DSRouter_IPAddress = "10.0.0.3";
+    ROS_Server_IPAddress = "10.0.0.111";
+    DSRouter_IPAddress = "10.0.0.110";
     joystick_available = false;
-    Rover_IPAddress = "10.0.0.109";
+    Rover_IPAddress = "10.0.0.110";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -87,7 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
-
+    connect(&myUDPReceiver,SIGNAL(new_resourcemessage(Resource)),this,SLOT(update_resource(Resource)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_devicelist(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
 
@@ -294,6 +294,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::cameraStreamChanged(int v)
 {
+    qDebug() << "starting" << QString::fromStdString(camerastreams.at(v).ip);
     camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
 }
 void MainWindow::newGSTCameraImage(guint8 *map,bool v)
@@ -946,6 +947,10 @@ void MainWindow::update_armeddisarmed_text(int value)
     }
     ui->bArmDisarm->setText(tempstr);
 }
+void MainWindow::update_resource(const Resource &resource)
+{
+    new_udpmsgreceived(UDP_Resource_ID);
+}
 void MainWindow::read_joystick()
 {
 
@@ -1309,7 +1314,7 @@ void MainWindow::update_messageviewer(const Diagnostic &diag)
     new_udpmsgreceived(UDP_Diagnostic_ID);
     if(diag.Level > INFO)
     {
-        QString tempstr = QTime::currentTime().toString() + " " + QString::fromStdString(diag.Description);
+        QString tempstr = "[" + QTime::currentTime().toString() + " " + QString::fromStdString(diag.NodeName) + "] " + QString::fromStdString(diag.Description);
         ui->tInfo->append(tempstr);
     }
 }
