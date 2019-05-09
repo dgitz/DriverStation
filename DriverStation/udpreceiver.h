@@ -90,6 +90,7 @@ signals:
     void new_resourcemessage(const Resource&);
     void new_armedstatusmessage(const int&);
     void new_image(const QPixmap&);
+    void new_subsystemdiagnosticmessage(const std::vector<int>&);
 private:
 
     QUdpSocket *udpSocket;

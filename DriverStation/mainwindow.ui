@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>730</x>
-      <y>650</y>
+      <y>750</y>
       <width>151</width>
       <height>81</height>
      </rect>
@@ -32,8 +32,8 @@
      <rect>
       <x>20</x>
       <y>10</y>
-      <width>861</width>
-      <height>641</height>
+      <width>921</width>
+      <height>731</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -53,7 +53,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabCalibrationJoystick">
        <attribute name="title">
@@ -1138,10 +1138,10 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>550</y>
+        <x>10</x>
+        <y>580</y>
         <width>831</width>
-        <height>51</height>
+        <height>111</height>
        </rect>
       </property>
      </widget>
@@ -1149,7 +1149,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>60</y>
         <width>640</width>
         <height>480</height>
        </rect>
@@ -1171,6 +1171,261 @@
        </rect>
       </property>
       <property name="currentText">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bSoftware_Icon">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>40</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Software</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bElectrical_Icon">
+      <property name="geometry">
+       <rect>
+        <x>690</x>
+        <y>40</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Electrical</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bCommunications_Icon">
+      <property name="geometry">
+       <rect>
+        <x>830</x>
+        <y>40</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Communications</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bSensors_Icon">
+      <property name="geometry">
+       <rect>
+        <x>690</x>
+        <y>110</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Sensors</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bActuators_Icon">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>110</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Actuators</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bDataStorage_Icon">
+      <property name="geometry">
+       <rect>
+        <x>830</x>
+        <y>110</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Data Storage</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bRemoteControl_Icon">
+      <property name="geometry">
+       <rect>
+        <x>690</x>
+        <y>180</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Remote Control</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bTargetAcquisition_Icon">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>180</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Target Acquisition</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bPose_Icon">
+      <property name="geometry">
+       <rect>
+        <x>830</x>
+        <y>180</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Pose</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bTiming_Icon">
+      <property name="geometry">
+       <rect>
+        <x>690</x>
+        <y>250</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>Timing</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bSystemResource_Icon">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>250</y>
+        <width>64</width>
+        <height>64</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>64</width>
+        <height>64</height>
+       </size>
+      </property>
+      <property name="toolTip">
+       <string>System Resource</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bDiagnoticFilter">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>550</y>
+        <width>511</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
        <string/>
       </property>
      </widget>
@@ -1200,7 +1455,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>650</y>
+      <y>750</y>
       <width>701</width>
       <height>81</height>
      </rect>
@@ -1224,7 +1479,7 @@
    <widget class="QLabel" name="iRoverSignal">
     <property name="geometry">
      <rect>
-      <x>1060</x>
+      <x>1110</x>
       <y>440</y>
       <width>175</width>
       <height>155</height>
@@ -1358,7 +1613,7 @@
    <widget class="QLabel" name="iRoverActive">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>950</x>
       <y>440</y>
       <width>155</width>
       <height>155</height>
@@ -1492,7 +1747,7 @@
    <widget class="QLabel" name="iROSSignal">
     <property name="geometry">
      <rect>
-      <x>1060</x>
+      <x>1110</x>
       <y>280</y>
       <width>175</width>
       <height>155</height>
@@ -1626,7 +1881,7 @@
    <widget class="QLabel" name="iRouterSignal">
     <property name="geometry">
      <rect>
-      <x>1060</x>
+      <x>1110</x>
       <y>120</y>
       <width>175</width>
       <height>155</height>
@@ -1760,7 +2015,7 @@
    <widget class="QLabel" name="iRouterActive">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>950</x>
       <y>120</y>
       <width>155</width>
       <height>155</height>
@@ -1894,7 +2149,7 @@
    <widget class="QLabel" name="iROSServerActive">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>950</x>
       <y>280</y>
       <width>155</width>
       <height>155</height>
@@ -2028,7 +2283,7 @@
    <widget class="QPushButton" name="bArmDisarm">
     <property name="geometry">
      <rect>
-      <x>920</x>
+      <x>970</x>
       <y>40</y>
       <width>281</width>
       <height>61</height>

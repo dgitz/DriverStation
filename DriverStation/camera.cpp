@@ -34,7 +34,7 @@ void Camera::startCapture(std::string ipaddress,uint32_t port)
      m_timer.setInterval(1000);  // 1Hz to check if we are getting frames from the camera...
     m_timer.start();
     m_time.start();
-    QImage img("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/LostCameraFeed.png");
+    QImage img("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/camera_graphics/LostCameraFeed.png");
     emit newFrameReady(img,true);
 
 }
@@ -44,7 +44,7 @@ void Camera::timeOut()
 
     if(m_time.elapsed() > 1000)
     {
-        QImage img("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/LostCameraFeed.png");
+        QImage img("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/camera_graphics/LostCameraFeed.png");
         status = CameraStatus::TIMEOUT;
         emit newFrameReady(img,true);
         emit reset();

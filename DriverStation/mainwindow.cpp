@@ -10,13 +10,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.111";
+    ROS_Server_IPAddress = "10.0.0.110";
     DSRouter_IPAddress = "10.0.0.110";
     joystick_available = false;
     Rover_IPAddress = "10.0.0.110";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
+    diagnostictype_filter = -1; //Show all
     QList<QHostAddress> list = QNetworkInterface::allAddresses();
 
     for(int i = 0; i <list.count();i++)
@@ -40,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
         kill_application(true);
     }
     init_udpmessageinfo();
+
 
 
 
@@ -92,6 +94,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_devicemessage(Device)),this,SLOT(update_devicelist(Device)));
 
 
+
     timer_10ms = new QTimer(this);
     timer_50ms = new QTimer(this);
     timer_100ms = new QTimer(this);
@@ -127,6 +130,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bTuningPReset,SIGNAL(clicked(bool)),SLOT(bTuningPReset_pressed()));
     connect(ui->bTuningIReset,SIGNAL(clicked(bool)),SLOT(bTuningIReset_pressed()));
     connect(ui->bTuningDReset,SIGNAL(clicked(bool)),SLOT(bTuningDReset_pressed()));
+    connect(ui->bDiagnoticFilter,SIGNAL(clicked(bool)),SLOT(bDiagnosticFilter_pressed()));
+
+    connect(ui->bElectrical_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_ElectricalButton_pressed()));
+    connect(ui->bSoftware_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_SoftwareButton_pressed()));
+    connect(ui->bCommunications_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_CommunicationsButton_pressed()));
+    connect(ui->bSensors_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_SensorsButton_pressed()));
+    connect(ui->bActuators_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_ActuatorsButton_pressed()));
+    connect(ui->bDataStorage_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_DataStorageButton_pressed()));
+    connect(ui->bRemoteControl_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_RemoteControlButton_pressed()));
+    connect(ui->bTargetAcquisition_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_TargetAcquisitionButton_pressed()));
+    connect(ui->bPose_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_PoseButton_pressed()));
+    connect(ui->bTiming_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_TimingButton_pressed()));
+    connect(ui->bSystemResource_Icon,SIGNAL(clicked(bool)),SLOT(bDiagnosticIcon_SystemResourceButton_pressed()));
 
 
     timer_10ms->start(10);
@@ -223,28 +239,29 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
     {
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Unactive.png");
+
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Router_Unactive.png");
         ui->iRouterActive->setPixmap(pixmap);
         ui->iRouterActive->setMask(pixmap.mask());
         ui->iRouterActive->show();
         DSRouter_Active = 0;
     }
     {
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSServer_Unactive.png");
         ui->iROSServerActive->setPixmap(pixmap);
         ui->iROSServerActive->setMask(pixmap.mask());
         ui->iROSServerActive->show();
         ROSServer_Active = 0;
     }
     {
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Rover_Unactive.png");
         ui->iRoverActive->setPixmap(pixmap);
         ui->iRoverActive->setMask(pixmap.mask());
         ui->iRoverActive->show();
         Rover_Active = 0;
     }
     {
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_0.png");
         ui->iRouterSignal->setPixmap(pixmap);
         ui->iRouterSignal->setMask(pixmap.mask());
         ui->iRouterSignal->show();
@@ -254,8 +271,10 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->iRoverSignal->setPixmap(pixmap);
         ui->iRoverSignal->setMask(pixmap.mask());
         ui->iRoverSignal->show();
-    }
 
+    }
+    init_icons();
+    connect(&myUDPReceiver,SIGNAL(new_subsystemdiagnosticmessage(std::vector<int>)),this,SLOT(update_diagnosticicons(std::vector<int>)));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
@@ -269,6 +288,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
     camera_status = CameraStatus::UNDEFINED;
     last_joy_sidebutton = 0;
+    ui->bDiagnoticFilter->setText("");
+    ui->bDiagnoticFilter->setVisible(false);
     elap_timer.start();
 }
 
@@ -363,9 +384,9 @@ void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
     if(code == 0) // ping successful
     {
         ROSServer_Active = 1;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Active.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSServer_Active.png");
         ui->iROSServerActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_" + QString::number(convert_pingms_tossi(ROSServer_pingtimer.elapsed())) + ".png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_" + QString::number(convert_pingms_tossi(ROSServer_pingtimer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
         ui->iROSSignal->setPixmap(pixmap2);
 
@@ -373,9 +394,9 @@ void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
     else // ping unsuccessful
     {
         ROSServer_Active = 0;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/ROSServer_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_iconss/ROSServer_Unactive.png");
         ui->iROSServerActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_0.png";
         QPixmap pixmap2(ssi_path);
         ui->iROSSignal->setPixmap(pixmap2);
     }
@@ -385,18 +406,18 @@ void MainWindow::check_DSRouter_finished(int code, QProcess::ExitStatus status)
     if(code == 0) // ping successful
     {
         DSRouter_Active = 1;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Active.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Router_Active.png");
         ui->iRouterActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_" + QString::number(convert_pingms_tossi(DSRouter_timer.elapsed())) + ".png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_" + QString::number(convert_pingms_tossi(DSRouter_timer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
         ui->iRouterSignal->setPixmap(pixmap2);
     }
     else // ping unsuccessful
     {
         DSRouter_Active = 0;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Router_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Router_Unactive.png");
         ui->iRouterActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_0.png";
         QPixmap pixmap2(ssi_path);
         ui->iRouterSignal->setPixmap(pixmap2);
     }
@@ -406,24 +427,25 @@ void MainWindow::check_Rover_finished(int code, QProcess::ExitStatus status)
     if(code == 0) // ping successful
     {
         Rover_Active = 1;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Active.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Rover_Active.png");
         ui->iRoverActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_" + QString::number(convert_pingms_tossi(Rover_pingtimer.elapsed())) + ".png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/icons/SSI_" + QString::number(convert_pingms_tossi(Rover_pingtimer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
         ui->iRoverSignal->setPixmap(pixmap2);
     }
     else // ping unsuccessful
     {
         Rover_Active = 0;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/Rover_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Rover_Unactive.png");
         ui->iRoverActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/RoverV2/SOFTWARE/gui/icons/SSI_0.png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_0.png";
         QPixmap pixmap2(ssi_path);
         ui->iRoverSignal->setPixmap(pixmap2);
     }
 }
 void MainWindow::check_network()
 {
+
     {
         QProcess * const process = new QProcess();
         connect(process,SIGNAL(finished(int, QProcess::ExitStatus)),this,SLOT(check_ROSServer_finished(int,QProcess::ExitStatus)));
@@ -741,6 +763,11 @@ void MainWindow::update_commstatus()
                                        "background-color: orange;"
                                        "font: bold italic 36px;");
         ui->tEStopState->setText("LOST COMM!");
+        for(std::size_t i = 0; i < icon_levels.size(); ++i)
+        {
+            icon_levels.at(i) = LEVEL_UNKNOWN;
+        }
+        update_diagnosticicons();
     }
 
     else if((time_sincelastcomm < 3000))
@@ -813,7 +840,7 @@ bool MainWindow::lookup_joystick(QString name,Joystick& joy)
 
 Axis MainWindow::lookup_joystickaxis(Joystick joy, int v)
 {
-    for(int i = 0; i < joy.axes.size(); i++)
+    for(std::size_t i = 0; i < joy.axes.size(); i++)
     {
         if(v == joy.axes.at(i).id)
         {
@@ -1223,7 +1250,12 @@ void MainWindow::update_devicelist()
         }
     }
 }
-
+void MainWindow::update_diagnosticicons(const std::vector<int>& levels)
+{
+    new_udpmsgreceived(UDP_SubsystemDiagnostic_ID);
+    icon_levels = levels;
+    update_diagnosticicons();
+}
 void MainWindow::update_devicelist(const Device &device)
 {
     bool add_new_device = true;
@@ -1312,10 +1344,23 @@ bool MainWindow::new_udpmsgsent(std::string id)
 void MainWindow::update_messageviewer(const Diagnostic &diag)
 {
     new_udpmsgreceived(UDP_Diagnostic_ID);
-    if(diag.Level > INFO)
+    if(diagnostictype_filter == -1)
     {
-        QString tempstr = "[" + QTime::currentTime().toString() + " " + QString::fromStdString(diag.NodeName) + "] " + QString::fromStdString(diag.Description);
-        ui->tInfo->append(tempstr);
+        if(diag.Level > INFO)
+        {
+            QString tempstr = "[" + QTime::currentTime().toString() + " " + QString::fromStdString(diag.NodeName) + "] " + QString::fromStdString(diag.Description);
+            ui->tInfo->append(tempstr);
+        }
+    }
+    else
+    {
+        if(diag.DiagnosticType == diagnostictype_filter)
+        {
+            QString tempstr = "[" + QTime::currentTime().toString() + " " + QString::fromStdString(diag.NodeName) + "] " +
+                    QString::fromStdString(get_level_string(diag.Level)) + " " +
+                    QString::fromStdString(diag.Description);
+            ui->tInfo->append(tempstr);
+        }
     }
 }
 
@@ -1331,6 +1376,27 @@ std::string MainWindow::get_level_string(int value)
     case FATAL: return "FATAL"; break;
     default: return ""; break;
     }
+}
+std::string MainWindow::get_diagnostictype_string(int value)
+{
+
+    switch (value)
+    {
+    case ELECTRICAL: return "ELECTRICAL"; break;
+    case SOFTWARE: return "SOFTWARE"; break;
+    case COMMUNICATIONS: return "COMMUNICATIONS"; break;
+    case SENSORS: return "SENSORS"; break;
+    case ACTUATORS: return "ACTUATORS"; break;
+    case DATA_STORAGE: return "DATA STORAGE"; break;
+    case REMOTE_CONTROL: return "REMOTE CONTROL"; break;
+    case TARGET_ACQUISITION: return "TARGET ACQUISITION"; break;
+    case POSE: return "POSE"; break;
+    case TIMING: return "TIMING"; break;
+    case SYSTEM_RESOURCE: return "SYSTEM RESOURCE"; break;
+    case GENERAL_ERROR: return "GENERAL ERROR"; break;
+    default: return "GENERAL_ERROR"; break;
+    }
+
 }
 bool MainWindow::create_emptyjoystickcalibrationfile()
 {
@@ -1758,6 +1824,13 @@ void MainWindow::init_udpmessageinfo()
         msg.name = "Firmware";
         udp_messages.push_back(msg);
     }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_SubsystemDiagnostic_ID;
+        msg.name = "Subsystem Diag";
+        udp_messages.push_back(msg);
+    }
+
 
 
     for(std::size_t i = 0; i < udp_messages.size(); i++)
@@ -1830,4 +1903,236 @@ bool MainWindow::load_MisConfigFile()
         }
     }
     return true;
+}
+void MainWindow::init_icons()
+{
+    {
+        Icon icon;
+        icon.name = "Electrical";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Software";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Communications";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Sensors";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Actuators";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Data_Storage";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Remote_Control";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Target_Acquisition";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Pose";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "Timing";
+        icons.push_back(icon);
+    }
+    {
+        Icon icon;
+        icon.name = "System_Resource";
+        icons.push_back(icon);
+    }
+    for(std::size_t i = 0; i < icons.size(); ++i)
+    {
+        std::string root_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/diagnosticstatus_icons/" + icons.at(i).name;
+        std::string noerror_path = root_path + "/" + icons.at(i).name + "_NoError.png";
+        std::string warn_path = root_path + "/" + icons.at(i).name + "_Warn.png";
+        std::string error_path = root_path + "/" + icons.at(i).name + "_Error.png";
+        std::string unknown_path = root_path + "/" + icons.at(i).name + "_Unknown.png";
+        icons.at(i).current_level_shown = -1;
+        icons.at(i).icon_image_paths.push_back(noerror_path);
+        icons.at(i).icon_image_paths.push_back(warn_path);
+        icons.at(i).icon_image_paths.push_back(error_path);
+        icons.at(i).icon_image_paths.push_back(unknown_path);
+
+        icon_levels.push_back(3); //Start with WARN
+    }
+    update_diagnosticicons();
+
+}
+void MainWindow::update_diagnosticicons()
+{
+    for(std::size_t i = 0; i < icon_levels.size(); ++i)
+    {
+        if(icon_levels.at(i) != icons.at(i).current_level_shown)
+        {
+            std::string image_path = icons.at(i).icon_image_paths.at(map_diagnosticlevel_toiconindex(icon_levels.at(i)));
+            qDebug() << "[" << i << "] Updating Icon: " << QString::fromStdString(icons.at(i).name) << " image with path: " << QString::fromStdString(image_path);
+            QPixmap pixmap(QString::fromStdString(image_path));
+            QIcon icon(pixmap);
+
+            if(pixmap.isNull() == true)
+            {
+                qDebug() << "Could not load at: " << QString::fromStdString(image_path);
+            }
+            switch(i)
+            {
+            case 0:
+                ui->bElectrical_Icon->setIcon(icon);
+                ui->bElectrical_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 1:
+                ui->bSoftware_Icon->setIcon(icon);
+                ui->bSoftware_Icon->setIconSize(pixmap.rect().size());
+
+                break;
+            case 2:
+                ui->bCommunications_Icon->setIcon(icon);
+                ui->bCommunications_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 3:
+                ui->bSensors_Icon->setIcon(icon);
+                ui->bSensors_Icon->setIconSize(pixmap.rect().size());
+            case 4:
+                ui->bActuators_Icon->setIcon(icon);
+                ui->bActuators_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 5:
+                ui->bDataStorage_Icon->setIcon(icon);
+                ui->bDataStorage_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 6:
+                ui->bRemoteControl_Icon->setIcon(icon);
+                ui->bRemoteControl_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 7:
+                ui->bTargetAcquisition_Icon->setIcon(icon);
+                ui->bTargetAcquisition_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 8:
+                ui->bPose_Icon->setIcon(icon);
+                ui->bPose_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 9:
+                ui->bTiming_Icon->setIcon(icon);
+                ui->bTiming_Icon->setIconSize(pixmap.rect().size());
+                break;
+            case 10:
+                ui->bSystemResource_Icon->setIcon(icon);
+                ui->bSystemResource_Icon->setIconSize(pixmap.rect().size());
+                break;
+            default:
+                break;
+            }
+
+            icons.at(i).current_level_shown = icon_levels.at(i);
+        }
+    }
+}
+void MainWindow::bDiagnosticFilter_pressed()
+{
+    update_diagnosticfilter(-1);
+}
+void MainWindow::bDiagnosticIcon_ElectricalButton_pressed()
+{
+    update_diagnosticfilter(ELECTRICAL);
+}
+void MainWindow::bDiagnosticIcon_SoftwareButton_pressed()
+{
+    update_diagnosticfilter(SOFTWARE);
+}
+void MainWindow::bDiagnosticIcon_CommunicationsButton_pressed()
+{
+    update_diagnosticfilter(COMMUNICATIONS);
+}
+void MainWindow::bDiagnosticIcon_SensorsButton_pressed()
+{
+    update_diagnosticfilter(SENSORS);
+}
+void MainWindow::bDiagnosticIcon_ActuatorsButton_pressed()
+{
+    update_diagnosticfilter(ACTUATORS);
+}
+void MainWindow::bDiagnosticIcon_DataStorageButton_pressed()
+{
+    update_diagnosticfilter(DATA_STORAGE);
+}
+void MainWindow::bDiagnosticIcon_RemoteControlButton_pressed()
+{
+    update_diagnosticfilter(REMOTE_CONTROL);
+}
+void MainWindow::bDiagnosticIcon_TargetAcquisitionButton_pressed()
+{
+    update_diagnosticfilter(TARGET_ACQUISITION);
+}
+void MainWindow::bDiagnosticIcon_PoseButton_pressed()
+{
+    update_diagnosticfilter(POSE);
+}
+void MainWindow::bDiagnosticIcon_TimingButton_pressed()
+{
+    update_diagnosticfilter(TIMING);
+}
+void MainWindow::bDiagnosticIcon_SystemResourceButton_pressed()
+{
+    update_diagnosticfilter(SYSTEM_RESOURCE);
+}
+
+void MainWindow::update_diagnosticfilter(int v)
+{
+    ui->tInfo->clearHistory();
+    ui->tInfo->clear();
+    diagnostictype_filter = v;
+    if(v >= 0)
+    {
+        ui->bDiagnoticFilter->setText("Diagnostic Filter: " + QString::fromStdString(get_diagnostictype_string(v)) + " (CLEAR)");
+        ui->bDiagnoticFilter->setVisible(true);
+    }
+    else
+    {
+        ui->bDiagnoticFilter->setVisible(false);
+        ui->bDiagnoticFilter->setText("");
+
+    }
+
+
+}
+int MainWindow::map_diagnosticlevel_toiconindex(int v)
+{
+    switch(v)
+    {
+    case 0:
+        return 0;
+    case 1:
+        return 0;
+    case 2:
+        return 0;
+    case 3:
+        return 1;
+    case 4:
+        return 2;
+    case 5:
+        return 2;
+    default:
+        return 3;
+    }
 }
