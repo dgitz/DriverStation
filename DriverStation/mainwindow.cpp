@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.190";
+    ROS_Server_IPAddress = "10.0.0.110";
     DSRouter_IPAddress = "10.0.0.110";
     joystick_available = false;
     Rover_IPAddress = "10.0.0.110";
