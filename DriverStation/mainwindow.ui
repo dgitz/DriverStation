@@ -1189,6 +1189,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Software</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1207,6 +1210,9 @@
         <width>64</width>
         <height>64</height>
        </size>
+      </property>
+      <property name="toolTip">
+       <string>Electrical</string>
       </property>
       <property name="text">
        <string/>
@@ -1227,6 +1233,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Communications</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1245,6 +1254,9 @@
         <width>64</width>
         <height>64</height>
        </size>
+      </property>
+      <property name="toolTip">
+       <string>Sensors</string>
       </property>
       <property name="text">
        <string/>
@@ -1265,6 +1277,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Actuators</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1283,6 +1298,9 @@
         <width>64</width>
         <height>64</height>
        </size>
+      </property>
+      <property name="toolTip">
+       <string>Data Storage</string>
       </property>
       <property name="text">
        <string/>
@@ -1303,6 +1321,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Remote Control</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1321,6 +1342,9 @@
         <width>64</width>
         <height>64</height>
        </size>
+      </property>
+      <property name="toolTip">
+       <string>Target Acquisition</string>
       </property>
       <property name="text">
        <string/>
@@ -1341,6 +1365,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Pose</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1360,6 +1387,9 @@
         <height>64</height>
        </size>
       </property>
+      <property name="toolTip">
+       <string>Timing</string>
+      </property>
       <property name="text">
        <string/>
       </property>
@@ -1378,6 +1408,9 @@
         <width>64</width>
         <height>64</height>
        </size>
+      </property>
+      <property name="toolTip">
+       <string>System Resource</string>
       </property>
       <property name="text">
        <string/>
