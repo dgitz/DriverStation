@@ -63,6 +63,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     std::string get_level_string(int);
+    std::string get_diagnostictype_string(int);
     struct UDPMessageInfo
     {
         std::string id;
@@ -70,11 +71,18 @@ public:
         uint64_t rx_count;
         uint64_t tx_count;
     };
+    struct Icon
+    {
+        std::string name;
+        int current_level_shown;
+        std::vector<std::string> icon_image_paths;
+    };
 
 
 public slots:
     void update_messageviewer(const Diagnostic &diag);
     void update_armeddisarmed_text(const int);
+    void update_diagnosticicons(const std::vector<int>&);
     void update_resource(const Resource &resource);
     void kill_application(const bool);
     void stop_system(const bool);
@@ -134,15 +142,35 @@ public slots:
     void newGSTCameraImage(guint8* map,bool);
     void newCameraStatus(uint8_t);
     void update_cameraoverlay();
+    void bDiagnosticFilter_pressed();
+    void bDiagnosticIcon_ElectricalButton_pressed();
+    void bDiagnosticIcon_SoftwareButton_pressed();
+    void bDiagnosticIcon_CommunicationsButton_pressed();
+    void bDiagnosticIcon_SensorsButton_pressed();
+    void bDiagnosticIcon_ActuatorsButton_pressed();
+    void bDiagnosticIcon_DataStorageButton_pressed();
+    void bDiagnosticIcon_RemoteControlButton_pressed();
+    void bDiagnosticIcon_TargetAcquisitionButton_pressed();
+    void bDiagnosticIcon_PoseButton_pressed();
+    void bDiagnosticIcon_TimingButton_pressed();
+    void bDiagnosticIcon_SystemResourceButton_pressed();
+
 
 
 signals:
     void new_diagnosticmessage(Diagnostic);
     void new_devicemessage(Device);
 
+public:
+
+    void update_diagnosticicons();
 private:
     void keyPressEvent(QKeyEvent * event);
     void init_udpmessageinfo();
+    void init_icons();
+    int map_diagnosticlevel_toiconindex(int v);
+    void update_diagnosticfilter(int v);
+
     std::vector<UDPMessageInfo> udp_messages;
     bool new_udpmsgreceived(std::string id);
     bool new_udpmsgsent(std::string id);
@@ -215,6 +243,9 @@ private:
     quint64 rx_image_counter;
     uint8_t camera_status;
     QImage camera_image;
+    std::vector<Icon> icons;
+    std::vector<int> icon_levels;
+    int diagnostictype_filter;
 
     //QLabel iRouterActive;
 

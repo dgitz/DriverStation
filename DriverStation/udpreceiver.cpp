@@ -88,7 +88,6 @@ void UDPReceiver::processPendingDatagrams()
         udpSocket->readDatagram(datagram.data(), datagram.size());
         QList<QByteArray> items = datagram.split(',');
         int message_id = items.at(0).toInt();
-
         switch(message_id)
         {
 
@@ -158,6 +157,29 @@ void UDPReceiver::processPendingDatagrams()
                 }
                 break;
             }
+        case SUBSYSTEMDIAGNOSTIC_ID:
+        {
+            std::vector<int> level;
+            int v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12;
+            if(udpmessagehandler->decode_SubsystemDiagnosticUDP(items,&v1,&v2,&v3,&v4,&v5,&v6,&v7,&v8,&v9,&v10,&v11))
+            {
+                any_comm_recived = true;
+                lastcomm_timer.restart();
+                level.push_back(v1);
+                level.push_back(v2);
+                level.push_back(v3);
+                level.push_back(v4);
+                level.push_back(v5);
+                level.push_back(v6);
+                level.push_back(v7);
+                level.push_back(v8);
+                level.push_back(v9);
+                level.push_back(v10);
+                level.push_back(v11);
+                emit new_subsystemdiagnosticmessage(level);
+            }
+            break;
+        }
             default:
             {
                 break;
