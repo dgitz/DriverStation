@@ -1,5 +1,5 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2019-05-08 07:54:47.453519***/
+/***Created on:2019-10-14 04:45:55.483847***/
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -175,14 +175,12 @@ int UDPMessageHandler::decode_EStopUDP(QList<QByteArray> items,std::string* Devi
 	*State=(int)items.at(2).toInt();
 	return 1;
 }
-QString UDPMessageHandler::encode_TuneControlGroupUDP(std::string ControlGroupName,std::string Type,double value1,double value2,double value3,int maxvalue,int minvalue,int defaultvalue)
+QString UDPMessageHandler::encode_TuneControlGroupUDP(std::string ControlGroupName,double value1,double value2,double value3,int maxvalue,int minvalue,int defaultvalue)
 {
 	QString tempstr = "";
 	tempstr.append(UDP_TuneControlGroup_ID);
 	tempstr.append(",");
 	tempstr.append(QString::fromStdString(ControlGroupName));
-	tempstr.append(",");
-	tempstr.append(QString::fromStdString(Type));
 	tempstr.append(",");
 	tempstr.append(QString::number(value1));
 	tempstr.append(",");
@@ -221,5 +219,27 @@ int UDPMessageHandler::decode_SubsystemDiagnosticUDP(QList<QByteArray> items,int
 	*Pose=(int)items.at(9).toInt();
 	*Timing=(int)items.at(10).toInt();
 	*System_Resource=(int)items.at(11).toInt();
+	return 1;
+}
+int UDPMessageHandler::decode_SystemSnapshotStateUDP(QList<QByteArray> items,std::string* State,int* PercentComplete,int* SystemSnapshotCount,std::string* SourceDevice,std::string* SystemSnapshotPath)
+{
+	if(items.size() != 6){ return 0; }
+	*State=items.at(1).toStdString();
+	*PercentComplete=(int)items.at(2).toInt();
+	*SystemSnapshotCount=(int)items.at(3).toInt();
+	*SourceDevice=items.at(4).toStdString();
+	*SystemSnapshotPath=items.at(5).toStdString();
+	return 1;
+}
+int UDPMessageHandler::decode_ControlGroupValueUDP(QList<QByteArray> items,double* tov,std::string* ControlGroupName,double* Command,double* Sense,double* Error,double* Error_perc,double* Output)
+{
+	if(items.size() != 8){ return 0; }
+	*tov=items.at(1).toDouble();
+	*ControlGroupName=items.at(2).toStdString();
+	*Command=items.at(3).toDouble();
+	*Sense=items.at(4).toDouble();
+	*Error=items.at(5).toDouble();
+	*Error_perc=items.at(6).toDouble();
+	*Output=items.at(7).toDouble();
 	return 1;
 }

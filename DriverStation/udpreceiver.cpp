@@ -180,19 +180,39 @@ void UDPReceiver::processPendingDatagrams()
             }
             break;
         }
-            default:
-            {
-                break;
-            }
-        }
-        foreach (const QByteArray &item,items)
+        case CONTROLGROUPVALUE_ID:
         {
-            //qDebug() << item;
+            std::string name;
+            double v0,v1,v2,v3,v4,v5;
+            if(udpmessagehandler->decode_ControlGroupValueUDP(items,&v0,&name,&v1,&v2,&v3,&v4,&v5))
+            {
+                any_comm_recived = true;
+                lastcomm_timer.restart();
+                ControlGroupValue cgvalue;
+                cgvalue.tov = v0;
+                cgvalue.name = name;
+                cgvalue.command_value = v1;
+                cgvalue.sense_value = v2;
+                cgvalue.error_value = v3;
+                cgvalue.error_perc_value = v4;
+                cgvalue.output_value = v5;
+                emit new_controlgroupvaluemessage(cgvalue);
+            }
+            break;
         }
+        default:
+        {
+            break;
+        }
+    }
+    foreach (const QByteArray &item,items)
+    {
+        //qDebug() << item;
+    }
+    }
 
 
 
         //statusLabel->setText(tr("Received datagram: \"%1\"")
         //                     .arg(datagram.data()));
-    }
 }

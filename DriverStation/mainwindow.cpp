@@ -1,19 +1,15 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include "cv.h"
-using namespace cv;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.110";
+    ROS_Server_IPAddress = "127.0.0.1";
     DSRouter_IPAddress = "10.0.0.110";
     joystick_available = false;
-    Rover_IPAddress = "10.0.0.110";
+    Rover_IPAddress = "127.0.0.1";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -274,6 +270,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     }
     init_icons();
+    connect(&myUDPReceiver,SIGNAL(new_controlgroupvaluemessage(ControlGroupValue)),this,SLOT(update_tuningview(ControlGroupValue)));
     connect(&myUDPReceiver,SIGNAL(new_subsystemdiagnosticmessage(std::vector<int>)),this,SLOT(update_diagnosticicons(std::vector<int>)));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
@@ -291,6 +288,106 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bDiagnoticFilter->setText("");
     ui->bDiagnoticFilter->setVisible(false);
     elap_timer.start();
+
+   // TUNING CHART STUFF
+    signal_error_enabled = true;
+    signal_input_enabled = true;
+    signal_command_enabled = true;
+    signal_errorperc_enabled = true;
+    signal_output_enabled = true;
+    connect(ui->cbSelectErrorSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectErrorSignal(bool)));
+    connect(ui->cbSelectSenseSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectSensorSignal(bool)));
+    connect(ui->cbSelectCommandSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectCommandSignal(bool)));
+    connect(ui->cbSelectOutputSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectOutputSignal(bool)));
+    connect(ui->cbSelectErrorPercSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectErrorPercSignal(bool)));
+    lock_tuningview = false;
+    controlgroup_view_received = false;
+    controlgroup_view_starttime = 0.0;
+
+    tuning_chart = new QChart;
+    connect(ui->bTuningViewReset,SIGNAL(clicked(bool)),SLOT(reset_tuningview(bool)));
+   //// QChartView *chartView = new QChartView(m_chart);
+   // chartView->setMinimumSize(800, 600);
+    tuning_signal_max = -10000000000.0;  //Really low number
+    tuning_signal_min = -1*tuning_signal_max;
+    tuning_chart_yaxis_min = -0.001;
+    tuning_chart_yaxis_max = 0.001;
+    lineseries_controlgroup_view_command = new QLineSeries(this);
+    lineseries_controlgroup_view_sensor = new QLineSeries(this);
+    lineseries_controlgroup_view_error = new QLineSeries(this);
+    lineseries_controlgroup_view_error_perc = new QLineSeries(this);
+    lineseries_controlgroup_view_output = new QLineSeries(this);
+
+    lineseries_controlgroup_view_error->setName("Error");
+    ui->cbSelectErrorSignal->setStyleSheet("QCheckBox { color: red }");
+    lineseries_controlgroup_view_error->setColor(Qt::red);
+
+    lineseries_controlgroup_view_output->setName("Output");
+    ui->cbSelectOutputSignal->setStyleSheet("QCheckBox { color: blue }");
+    lineseries_controlgroup_view_output->setColor(Qt::blue);
+
+    lineseries_controlgroup_view_sensor->setName("Sensor");
+    ui->cbSelectSenseSignal->setStyleSheet("QCheckBox { color: black }");
+    lineseries_controlgroup_view_sensor->setColor(Qt::black);
+
+    lineseries_controlgroup_view_command->setName("Command");
+    ui->cbSelectCommandSignal->setStyleSheet("QCheckBox { color: green }");
+    lineseries_controlgroup_view_command->setColor(Qt::green);
+
+    lineseries_controlgroup_view_error_perc->setName("Error (%)");
+    ui->cbSelectErrorPercSignal->setStyleSheet("QCheckBox { color: cyan }");
+    lineseries_controlgroup_view_error_perc->setColor(Qt::cyan);
+
+    tuning_chart->addSeries(lineseries_controlgroup_view_command);
+    tuning_chart->addSeries(lineseries_controlgroup_view_sensor);
+    tuning_chart->addSeries(lineseries_controlgroup_view_error);
+    tuning_chart->addSeries(lineseries_controlgroup_view_error_perc);
+    tuning_chart->addSeries(lineseries_controlgroup_view_output);
+    QValueAxis *axisX = new QValueAxis;
+    axisX->setRange(0, TUNINGVIEW_TIMESAMPLE_COUNT);
+    axisX->setLabelFormat("%g");
+    axisX->setTitleText("Time (s)");
+    QValueAxis *axisY = new QValueAxis;
+    axisY->setRange(tuning_chart_yaxis_min, tuning_chart_yaxis_max);
+    axisY->setTitleText("Value");
+    //tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_command);
+    //tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_command);
+   // lineseries_controlgroup_view_command->attachAxis(axisX);
+  // lineseries_controlgroup_view_command->attachAxis(axisY);
+   // lineseries_controlgroup_view_sensor->attachAxis(axisX);
+  // lineseries_controlgroup_view_sensor->attachAxis(axisY);
+    //lineseries_controlgroup_view_error->attachAxis(axisX);
+    //lineseries_controlgroup_view_error->attachAxis(axisY);
+   // lineseries_controlgroup_view_error_perc->attachAxis(axisX);
+    //lineseries_controlgroup_view_error_perc->attachAxis(axisY);
+   // lineseries_controlgroup_view_output->attachAxis(axisX);
+   // lineseries_controlgroup_view_output->attachAxis(axisY);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_sensor);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_sensor);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_command);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_command);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_error);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_error);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_error_perc);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_error_perc);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_output);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_output);
+    tuning_chart->legend()->hide();
+    tuning_chart->setTitle("Tune View");
+    tuning_chart->setAnimationOptions(QChart::AllAnimations);
+    ui->gTuningView->setChart(tuning_chart);
+    ui->gTuningView->setRenderHint(QPainter::Antialiasing);
+
+    //ui->gTuningView->chart()->setAxisX(axisX,m_series);
+   // ui->gTuningView->chart()->setAxisY(axisY,m_series);
+
+    /*
+    QMainWindow window;
+    window.setCentralWidget(chartView);
+    window.resize(400, 300);
+    */
+
+
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
@@ -312,7 +409,31 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     }
 }
-
+void MainWindow::cbSelectErrorSignal(bool v)
+{
+    signal_error_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectSensorSignal(bool v)
+{
+    signal_input_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectCommandSignal(bool v)
+{
+    signal_command_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectOutputSignal(bool v)
+{
+    signal_output_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectErrorPercSignal(bool v)
+{
+    signal_errorperc_enabled = v;
+    reset_tuningview(true);
+}
 void MainWindow::cameraStreamChanged(int v)
 {
     qDebug() << "starting" << QString::fromStdString(camerastreams.at(v).ip);
@@ -320,12 +441,14 @@ void MainWindow::cameraStreamChanged(int v)
 }
 void MainWindow::newGSTCameraImage(guint8 *map,bool v)
 {
+#ifdef OPENCV_ENABLED
     cv::Mat temp_mat = cv::Mat(cv::Size(640, 480+480/2), CV_8UC1, (char*)map);
     cv::Mat result(480,640,3);
     cv::cvtColor(temp_mat,result,CV_YUV2RGB_I420,3);
     QImage rgb(result.size().width,result.size().height,QImage::Format_RGB888);
     memcpy(rgb.scanLine(0), (unsigned char*)result.data, rgb.width() * rgb.height() * result.channels());
     camera_image = rgb;
+#endif
 }
 void MainWindow::newCameraImage(QImage img, bool v)
 {
@@ -375,8 +498,16 @@ void MainWindow::controlGroupChanged(QString v)
         if(controlgroups.at(i).name == v)
         {
             current_cg = controlgroups.at(i);
+
         }
     }
+    qDebug() << "P: " << QString::number(current_cg.gain.P);
+    ui->dTuningP->setValue(current_cg.gain.P);
+    ui->dTuningI->setValue(current_cg.gain.I);
+    ui->dTuningD->setValue(current_cg.gain.D);
+    ui->hsTuningMaxValue->setValue(current_cg.output_max);
+    ui->hsTuningDefaultValue->setValue(current_cg.output_default);
+    ui->hsTuningMinValue->setValue(current_cg.output_min);
 }
 
 void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
@@ -664,57 +795,61 @@ void MainWindow::bTuningIReset_pressed()
     current_cg.gain.I = current_cg.gain.I_default;
     current_cg.gain.I_min = current_cg.gain.I-1.0;
     current_cg.gain.I_max = current_cg.gain.I+1.0;
-    ui->dTuningI->setValue(0);
+    ui->dTuningI->setValue(current_cg.gain.I);
 }
 void MainWindow::bTuningDReset_pressed()
 {
     current_cg.gain.D = current_cg.gain.D_default;
     current_cg.gain.D_min = current_cg.gain.D-1.0;
     current_cg.gain.D_max = current_cg.gain.D+1.0;
-    ui->dTuningD->setValue(0);
+    ui->dTuningD->setValue(current_cg.gain.D);
 }
 
 void MainWindow::bTuningPBigger_pressed()
 {
+    double old_gain = current_cg.gain.P;
     double range = current_cg.gain.P_max-current_cg.gain.P_min;
-    current_cg.gain.P_max = current_cg.gain.P + range*4.0;
-    current_cg.gain.P_min = current_cg.gain.P - range*4.0;
+    current_cg.gain.P_max = current_cg.gain.P + range*1.0;
+    current_cg.gain.P_min = current_cg.gain.P - range*1.0;
+    current_cg.gain.P = old_gain;
     ui->dTuningP->setValue(0);
-}
+   }
 void MainWindow::bTuningPSmaller_pressed()
 {
+    double old_gain = current_cg.gain.P;
     double range = current_cg.gain.P_max-current_cg.gain.P_min;
     current_cg.gain.P_max = current_cg.gain.P + range/4.0;
     current_cg.gain.P_min = current_cg.gain.P - range/4.0;
+    current_cg.gain.P = old_gain;
     ui->dTuningP->setValue(0);
 }
 void MainWindow::bTuningIBigger_pressed()
 {
     double range = current_cg.gain.I_max-current_cg.gain.I_min;
-    current_cg.gain.I_max = current_cg.gain.I + range*4.0;
-    current_cg.gain.I_min = current_cg.gain.I - range*4.0;
-    ui->dTuningI->setValue(0);
+    current_cg.gain.I_max = current_cg.gain.I + range*1.0;
+    current_cg.gain.I_min = current_cg.gain.I - range*1.0;
+    ui->dTuningI->setValue(current_cg.gain.I);
 }
 void MainWindow::bTuningISmaller_pressed()
 {
     double range = current_cg.gain.I_max-current_cg.gain.I_min;
     current_cg.gain.I_max = current_cg.gain.I + range/4.0;
     current_cg.gain.I_min = current_cg.gain.I - range/4.0;
-    ui->dTuningI->setValue(0);
+    ui->dTuningI->setValue(current_cg.gain.I);
 }
 void MainWindow::bTuningDBigger_pressed()
 {
     double range = current_cg.gain.D_max-current_cg.gain.D_min;
-    current_cg.gain.D_max = current_cg.gain.D + range*4.0;
-    current_cg.gain.D_min = current_cg.gain.D - range*4.0;
-    ui->dTuningD->setValue(0);
+    current_cg.gain.D_max = current_cg.gain.D + range*1.0;
+    current_cg.gain.D_min = current_cg.gain.D - range*1.0;
+    ui->dTuningD->setValue(current_cg.gain.D);
 }
 void MainWindow::bTuningDSmaller_pressed()
 {
     double range = current_cg.gain.D_max-current_cg.gain.D_min;
     current_cg.gain.D_max = current_cg.gain.D + range/4.0;
     current_cg.gain.D_min = current_cg.gain.D - range/4.0;
-    ui->dTuningD->setValue(0);
+    ui->dTuningD->setValue(current_cg.gain.D);
 }
 
 
@@ -932,6 +1067,21 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+void MainWindow::reset_tuningview(bool v)
+{
+    lock_tuningview = true;
+    tuning_signal_max = -10000000000.0;
+    tuning_signal_min = -1*tuning_signal_max;
+    controlgroup_view_received = false;
+    lineseries_controlgroup_view_command->clear();
+    lineseries_controlgroup_view_sensor->clear();
+    lineseries_controlgroup_view_error->clear();
+    lineseries_controlgroup_view_error_perc->clear();
+    lineseries_controlgroup_view_output->clear();
+    tuning_chart_yaxis_min = -0.001;
+    tuning_chart_yaxis_max = 0.001;
+    lock_tuningview = false;
+}
 void MainWindow::stop_system(bool value)
 {
 }
@@ -1039,21 +1189,28 @@ qint32 MainWindow::compute_joystickoutput(int axisid, qint32 invalue)
 double MainWindow::scale_value(double x,double neutral,double x1,double x2,double y1,double y2, double deadband)
 {
     double out = 0.0;
+    int state = 0;
     if(x < (-1.0*deadband))
     {
+        state = -1;
         double m = (y1-neutral)/(x1-(-1.0*deadband));
         out = m*(x-x1)+y1;
     }
     else if(x > deadband)
     {
+        state = 1;
         double m = (y2-neutral)/(x2-(deadband));
         out = m*(x-x2)+y2;
 
     }
     else
     {
+        state = 0;
         out = neutral;
     }
+   // qDebug() << "s: " << QString::number(state) << " x: " << QString::number(x) << " n: " << QString::number(neutral) << " x1: " << QString::number(x1) <<
+    //            " x2: " << QString::number(x2) << " y1: " << QString::number(y1) << " y2: " << QString::number(y2) <<
+   //             " db: " << QString::number(deadband) << " out:" << QString::number(out);
     return out;
 }
 void MainWindow::update_axis(int axisid,qint32 neutral,qint32 max,qint32 min,int deadband, bool invert)
@@ -1219,13 +1376,15 @@ void MainWindow::update_CalibrationPanel()
 }
 void MainWindow::update_TuningPanel()
 {
-    double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
-    double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
-    double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
 
-    current_cg.gain.P = Pscaled;
-    current_cg.gain.I = Iscaled;
-    current_cg.gain.D = Dscaled;
+   double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
+   double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
+   double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
+
+   current_cg.gain.P = Pscaled;
+   current_cg.gain.I = Iscaled;
+   current_cg.gain.D = Dscaled;
+    //   qDebug() << "gain: " << QString::number(current_cg.gain.P);
 
     ui->lTuningPValue->setText(QString().setNum(current_cg.gain.P,'k',4));
     ui->lTuningIValue->setText(QString().setNum(current_cg.gain.I,'k',4));
@@ -1250,6 +1409,124 @@ void MainWindow::update_devicelist()
         }
     }
 }
+void MainWindow::update_tuningview(const ControlGroupValue &cgvalue)
+{
+    new_udpmsgreceived(UDP_ControlGroupValue_ID);
+    if(lock_tuningview == false)
+    {
+        if(controlgroup_view_received == false)
+        {
+            controlgroup_view_starttime = cgvalue.tov;
+            controlgroup_view_received = true;
+        }
+        double sample_time = cgvalue.tov-controlgroup_view_starttime;
+        QVector<double> y_list;
+        if(signal_error_enabled)
+        {
+            y_list.push_back( cgvalue.error_value);
+            lineseries_controlgroup_view_error->append((sample_time), cgvalue.error_value);
+        }
+        if(signal_input_enabled)
+        {
+           y_list.push_back( cgvalue.sense_value);
+            lineseries_controlgroup_view_sensor->append((sample_time), cgvalue.sense_value);
+        }
+        if(signal_command_enabled)
+        {
+            y_list.push_back( cgvalue.command_value);
+            lineseries_controlgroup_view_command->append((sample_time), cgvalue.command_value);
+        }
+        if(signal_output_enabled)
+        {
+            y_list.push_back( cgvalue.output_value);
+            lineseries_controlgroup_view_output->append((sample_time), cgvalue.output_value);
+        }
+        if(signal_errorperc_enabled)
+        {
+            y_list.push_back( cgvalue.error_perc_value);
+            lineseries_controlgroup_view_error_perc->append((sample_time), cgvalue.error_perc_value);
+        }
+        double min = *std::min_element(y_list.constBegin(), y_list.constEnd());
+        double max = *std::max_element(y_list.constBegin(), y_list.constEnd());
+        if(max > tuning_signal_max)
+        {
+            tuning_signal_max = max;
+        }
+        if(min < tuning_signal_min)
+        {
+            tuning_signal_min = min;
+        }
+        bool max_changed = false;
+        bool min_changed = false;
+        if(tuning_signal_max > (0.9*tuning_chart_yaxis_max))
+        {
+            qDebug() << "x1";
+            max_changed = true;
+            double prev = tuning_chart_yaxis_max;
+            tuning_chart_yaxis_max = tuning_signal_max*1.1;
+            if(fabs(tuning_chart_yaxis_max) < .000001)
+            {
+                tuning_chart_yaxis_max = prev;
+            }
+        }
+        if(tuning_signal_max < (0.9*tuning_chart_yaxis_max))
+        {
+            qDebug() << "x2";
+            max_changed = true;
+            double prev = tuning_chart_yaxis_max;
+            tuning_chart_yaxis_max = tuning_signal_max;
+            if(fabs(tuning_chart_yaxis_max) < .000001)
+            {
+                tuning_chart_yaxis_max = prev;
+            }
+        }
+        if(tuning_signal_min < (0.9*tuning_chart_yaxis_min))
+        {
+            qDebug() << "x3";
+            min_changed = true;
+            double prev = tuning_chart_yaxis_min;
+            tuning_chart_yaxis_min = tuning_signal_min*1.1;
+            if(fabs(tuning_chart_yaxis_min) < .000001)
+            {
+                tuning_chart_yaxis_min = prev;
+            }
+        }
+        if(tuning_signal_min > (0.9*tuning_chart_yaxis_min))
+        {
+            qDebug() << "x4";
+            min_changed = true;
+            double prev = tuning_chart_yaxis_min;
+            tuning_chart_yaxis_min = tuning_signal_min;
+            if(fabs(tuning_chart_yaxis_min) < .000001)
+            {
+                tuning_chart_yaxis_min = prev;
+            }
+        }
+        qDebug() << "x1: " << min << " x2: " << tuning_chart_yaxis_min << " x3: " << max << " x4: " << tuning_chart_yaxis_max;
+
+        if(max_changed == true)
+        {
+
+            tuning_chart->axisY()->setRange(tuning_chart_yaxis_min, tuning_chart_yaxis_max);
+         }
+    }
+
+}
+/*
+        if(y< tuning_chart_yaxis_min || y > tuning_chart_yaxis_max)
+        {
+            if(y < tuning_chart_yaxis_min)
+            {
+                tuning_chart_yaxis_min = y;
+            }
+            if(y> tuning_chart_yaxis_max)
+            {
+                tuning_chart_yaxis_max = y;
+            }
+            tuning_chart->axisY()->setRange(tuning_chart_yaxis_min-2.0, tuning_chart_yaxis_max+2.0);
+         }
+ * */
+
 void MainWindow::update_diagnosticicons(const std::vector<int>& levels)
 {
     new_udpmsgreceived(UDP_SubsystemDiagnostic_ID);
@@ -1576,10 +1853,12 @@ void MainWindow::read_ControlGroupFile()
 
                             while(reader.readNextStartElement())
                             {
-                                qDebug() << "name: " << reader.name();
+                                if(reader.name() == "Options")
+                                {
+                                    reader.skipCurrentElement();
+                                }
                                 if(reader.name() == "Name")
                                 {
-
                                     cg.name = reader.readElementText();
                                 }
                                 else if(reader.name() == "Command")
@@ -1594,34 +1873,63 @@ void MainWindow::read_ControlGroupFile()
                                 {
                                     reader.skipCurrentElement();
                                 }
-                                else if(reader.name() == "Gain")
+                                else if(reader.name() == "Mode")
                                 {
+                                    reader.skipCurrentElement();
+                                }
+                                else if(reader.name() == "Gains")
+                                {
+
                                     while(reader.readNextStartElement())
                                     {
                                         if(reader.name() == "Type")
                                         {
                                             cg.gain.type = reader.readElementText();
                                         }
-                                        else if(reader.name() == "Proportional")
+                                        else if(reader.name() == "P")
                                         {
                                             cg.gain.P = reader.readElementText().toDouble();
                                             cg.gain.P_default = cg.gain.P;
                                             cg.gain.P_min = cg.gain.P-1.0;
                                             cg.gain.P_max = cg.gain.P+1.0;
                                         }
-                                        else if(reader.name() == "Integral")
+                                        else if(reader.name() == "I")
                                         {
                                             cg.gain.I = reader.readElementText().toDouble();
                                             cg.gain.I_default = cg.gain.I;
                                             cg.gain.I_min = cg.gain.I-1.0;
                                             cg.gain.I_max = cg.gain.I+1.0;
                                         }
-                                        else if(reader.name() == "Derivative")
+                                        else if(reader.name() == "D")
                                         {
                                             cg.gain.D = reader.readElementText().toDouble();
                                             cg.gain.D_default = cg.gain.D;
                                             cg.gain.D_min = cg.gain.D-1.0;
                                             cg.gain.D_max = cg.gain.D+1.0;
+                                        }
+                                    }
+                                }
+                                else if(reader.name() == "Limits")
+                                {
+                                    while(reader.readNextStartElement())
+                                    {
+                                        if(reader.name() == "Output")
+                                        {
+                                            while(reader.readNextStartElement())
+                                            {
+                                                if(reader.name() == "Max")
+                                                {
+                                                    cg.output_max = reader.readElementText().toDouble();
+                                                }
+                                                else if(reader.name() == "Min")
+                                                {
+                                                    cg.output_min = reader.readElementText().toDouble();
+                                                }
+                                                else if(reader.name() == "Default")
+                                                {
+                                                    cg.output_default = reader.readElementText().toDouble();
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -1648,10 +1956,6 @@ void MainWindow::read_ControlGroupFile()
     {
         ui->cbControlGroup->addItem(controlgroups.at(i).name);
     }
-    ui->hsTuningMaxValue->setValue(1500);
-    ui->hsTuningMinValue->setValue(1500);
-    ui->hsTuningDefaultValue->setValue(1500);
-
     return;
 }
 bool MainWindow::load_DeviceFile()
@@ -1828,6 +2132,12 @@ void MainWindow::init_udpmessageinfo()
         UDPMessageInfo msg;
         msg.id = UDP_SubsystemDiagnostic_ID;
         msg.name = "Subsystem Diag";
+        udp_messages.push_back(msg);
+    }
+    {
+        UDPMessageInfo msg;
+        msg.id = UDP_ControlGroupValue_ID;
+        msg.name = "ControlGroup Value";
         udp_messages.push_back(msg);
     }
 

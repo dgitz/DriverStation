@@ -9,8 +9,9 @@
 #include <QProcess>
 #include <QTreeWidget>
 #include <QDial>
-#include <QtCharts>
-#include <QLineSeries>
+#include <QMessageBox>
+#include <QtCharts/QChartView>
+#include <QtCharts/QLineSeries>
 #include <udpreceiver.h>
 #include <udptransmitter.h>
 #include <tcpreceiver.h>
@@ -30,9 +31,17 @@
 #include "camera.h"
 #include <linux/joystick.h>
 #include <QtGamepad>
+#include <algorithm>
 
 #include <gst/app/gstappsink.h>
 #include <glib.h>
+//#define OPENCV_ENABLED
+#ifdef OPENCV_ENABLED
+#include <opencv2/opencv.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/imgcodecs.hpp>
+//using namespace cv;
+#endif
 
 
 
@@ -49,6 +58,8 @@
 #define DIAGNOSTIC_TAB 2
 #define CALIBRATIONTAB_JOYSTICK 0
 #define CALIBRATIONTAB_TUNING 1
+
+#define TUNINGVIEW_TIMESAMPLE_COUNT 60
 
 //using namespace QtCharts;
 namespace Ui {
@@ -80,6 +91,8 @@ public:
 
 
 public slots:
+    void reset_tuningview(const bool);
+    void update_tuningview(const ControlGroupValue &cgvalue);
     void update_messageviewer(const Diagnostic &diag);
     void update_armeddisarmed_text(const int);
     void update_diagnosticicons(const std::vector<int>&);
@@ -154,6 +167,12 @@ public slots:
     void bDiagnosticIcon_PoseButton_pressed();
     void bDiagnosticIcon_TimingButton_pressed();
     void bDiagnosticIcon_SystemResourceButton_pressed();
+
+    void cbSelectSensorSignal(const bool);
+    void cbSelectErrorSignal(const bool);
+    void cbSelectCommandSignal(const bool);
+    void cbSelectOutputSignal(const bool);
+    void cbSelectErrorPercSignal(const bool);
 
 
 
@@ -246,6 +265,28 @@ private:
     std::vector<Icon> icons;
     std::vector<int> icon_levels;
     int diagnostictype_filter;
+    bool lock_tuningview;
+    bool controlgroup_view_received;
+    double controlgroup_view_starttime;
+    QtCharts::QChart *tuning_chart;
+    double tuning_chart_yaxis_min;
+    double tuning_chart_yaxis_max;
+    bool signal_error_enabled;
+    bool signal_input_enabled;
+    bool signal_command_enabled;
+    bool signal_errorperc_enabled;
+    bool signal_output_enabled;
+    double tuning_signal_max;
+    double tuning_signal_min;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_command;// = new QLineSeries();
+    QtCharts::QLineSeries *lineseries_controlgroup_view_sensor;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_error;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_error_perc;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_output;
+
+
+    //QtCharts::QLineSeries *m_series;
+    //QtCharts::QChart *tuning_chart;
 
     //QLabel iRouterActive;
 

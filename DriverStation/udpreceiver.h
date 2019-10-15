@@ -91,6 +91,7 @@ signals:
     void new_armedstatusmessage(const int&);
     void new_image(const QPixmap&);
     void new_subsystemdiagnosticmessage(const std::vector<int>&);
+    void new_controlgroupvaluemessage(const ControlGroupValue&);
 private:
 
     QUdpSocket *udpSocket;

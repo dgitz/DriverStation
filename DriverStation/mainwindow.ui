@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1251</width>
+    <width>1438</width>
     <height>949</height>
    </rect>
   </property>
@@ -32,12 +32,12 @@
      <rect>
       <x>20</x>
       <y>10</y>
-      <width>921</width>
+      <width>1051</width>
       <height>731</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabCalibration">
      <attribute name="title">
@@ -49,11 +49,11 @@
         <x>0</x>
         <y>0</y>
         <width>851</width>
-        <height>541</height>
+        <height>411</height>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabCalibrationJoystick">
        <attribute name="title">
@@ -572,7 +572,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -585,7 +585,7 @@
         <property name="geometry">
          <rect>
           <x>200</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -598,7 +598,7 @@
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>190</y>
+          <y>160</y>
           <width>80</width>
           <height>23</height>
          </rect>
@@ -637,7 +637,7 @@
         <property name="geometry">
          <rect>
           <x>18</x>
-          <y>470</y>
+          <y>350</y>
           <width>221</width>
           <height>20</height>
          </rect>
@@ -659,7 +659,7 @@
         <property name="geometry">
          <rect>
           <x>8</x>
-          <y>150</y>
+          <y>120</y>
           <width>241</width>
           <height>20</height>
          </rect>
@@ -696,7 +696,7 @@
         <property name="geometry">
          <rect>
           <x>290</x>
-          <y>470</y>
+          <y>350</y>
           <width>221</width>
           <height>15</height>
          </rect>
@@ -718,7 +718,7 @@
         <property name="geometry">
          <rect>
           <x>350</x>
-          <y>190</y>
+          <y>160</y>
           <width>80</width>
           <height>23</height>
          </rect>
@@ -730,10 +730,10 @@
        <widget class="QDial" name="dTuningI">
         <property name="geometry">
          <rect>
-          <x>260</x>
-          <y>160</y>
-          <width>261</width>
-          <height>341</height>
+          <x>300</x>
+          <y>130</y>
+          <width>180</width>
+          <height>260</height>
          </rect>
         </property>
         <property name="minimum">
@@ -747,7 +747,7 @@
         <property name="geometry">
          <rect>
           <x>268</x>
-          <y>150</y>
+          <y>120</y>
           <width>241</width>
           <height>20</height>
          </rect>
@@ -771,7 +771,7 @@
         <property name="geometry">
          <rect>
           <x>270</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -784,7 +784,7 @@
         <property name="geometry">
          <rect>
           <x>460</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -797,7 +797,7 @@
         <property name="geometry">
          <rect>
           <x>570</x>
-          <y>470</y>
+          <y>350</y>
           <width>221</width>
           <height>15</height>
          </rect>
@@ -819,7 +819,7 @@
         <property name="geometry">
          <rect>
           <x>630</x>
-          <y>190</y>
+          <y>160</y>
           <width>80</width>
           <height>23</height>
          </rect>
@@ -831,10 +831,10 @@
        <widget class="QDial" name="dTuningD">
         <property name="geometry">
          <rect>
-          <x>540</x>
-          <y>160</y>
-          <width>261</width>
-          <height>341</height>
+          <x>580</x>
+          <y>130</y>
+          <width>180</width>
+          <height>260</height>
          </rect>
         </property>
         <property name="minimum">
@@ -848,7 +848,7 @@
         <property name="geometry">
          <rect>
           <x>548</x>
-          <y>150</y>
+          <y>120</y>
           <width>241</width>
           <height>20</height>
          </rect>
@@ -872,7 +872,7 @@
         <property name="geometry">
          <rect>
           <x>550</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -885,7 +885,7 @@
         <property name="geometry">
          <rect>
           <x>740</x>
-          <y>430</y>
+          <y>310</y>
           <width>51</width>
           <height>23</height>
          </rect>
@@ -897,10 +897,10 @@
        <widget class="QDial" name="dTuningP">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>160</y>
-          <width>261</width>
-          <height>341</height>
+          <x>40</x>
+          <y>130</y>
+          <width>180</width>
+          <height>260</height>
          </rect>
         </property>
         <property name="minimum">
@@ -923,10 +923,10 @@
          </rect>
         </property>
         <property name="minimum">
-         <number>1000</number>
+         <number>0</number>
         </property>
         <property name="maximum">
-         <number>2000</number>
+         <number>3000</number>
         </property>
         <property name="sliderPosition">
          <number>1500</number>
@@ -957,10 +957,10 @@
          </rect>
         </property>
         <property name="minimum">
-         <number>1000</number>
+         <number>0</number>
         </property>
         <property name="maximum">
-         <number>2000</number>
+         <number>3000</number>
         </property>
         <property name="sliderPosition">
          <number>1500</number>
@@ -991,10 +991,10 @@
          </rect>
         </property>
         <property name="minimum">
-         <number>1000</number>
+         <number>0</number>
         </property>
         <property name="maximum">
-         <number>2000</number>
+         <number>3000</number>
         </property>
         <property name="sliderPosition">
          <number>1500</number>
@@ -1126,6 +1126,109 @@
        <zorder>lTuningMinValue</zorder>
        <zorder>lTuningDefaultValue</zorder>
       </widget>
+     </widget>
+     <widget class="QChartView" name="gTuningView">
+      <property name="geometry">
+       <rect>
+        <x>140</x>
+        <y>420</y>
+        <width>761</width>
+        <height>261</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="bTuningViewReset">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>420</y>
+        <width>89</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbSelectSenseSignal">
+      <property name="geometry">
+       <rect>
+        <x>920</x>
+        <y>460</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Sense</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbSelectCommandSignal">
+      <property name="geometry">
+       <rect>
+        <x>920</x>
+        <y>490</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Command</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbSelectOutputSignal">
+      <property name="geometry">
+       <rect>
+        <x>920</x>
+        <y>520</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Output</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbSelectErrorSignal">
+      <property name="geometry">
+       <rect>
+        <x>920</x>
+        <y>550</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Error</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cbSelectErrorPercSignal">
+      <property name="geometry">
+       <rect>
+        <x>920</x>
+        <y>580</y>
+        <width>92</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Error (%)</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabOperation">
@@ -1479,7 +1582,7 @@
    <widget class="QLabel" name="iRoverSignal">
     <property name="geometry">
      <rect>
-      <x>1110</x>
+      <x>1250</x>
       <y>440</y>
       <width>175</width>
       <height>155</height>
@@ -1613,7 +1716,7 @@
    <widget class="QLabel" name="iRoverActive">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>1090</x>
       <y>440</y>
       <width>155</width>
       <height>155</height>
@@ -1747,7 +1850,7 @@
    <widget class="QLabel" name="iROSSignal">
     <property name="geometry">
      <rect>
-      <x>1110</x>
+      <x>1250</x>
       <y>280</y>
       <width>175</width>
       <height>155</height>
@@ -1881,7 +1984,7 @@
    <widget class="QLabel" name="iRouterSignal">
     <property name="geometry">
      <rect>
-      <x>1110</x>
+      <x>1250</x>
       <y>120</y>
       <width>175</width>
       <height>155</height>
@@ -2015,7 +2118,7 @@
    <widget class="QLabel" name="iRouterActive">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>1090</x>
       <y>120</y>
       <width>155</width>
       <height>155</height>
@@ -2149,7 +2252,7 @@
    <widget class="QLabel" name="iROSServerActive">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>1090</x>
       <y>280</y>
       <width>155</width>
       <height>155</height>
@@ -2283,7 +2386,7 @@
    <widget class="QPushButton" name="bArmDisarm">
     <property name="geometry">
      <rect>
-      <x>970</x>
+      <x>1110</x>
       <y>40</y>
       <width>281</width>
       <height>61</height>
@@ -2302,6 +2405,13 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QGraphicsView</extends>
+   <header>QtCharts</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
