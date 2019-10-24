@@ -183,8 +183,8 @@ void UDPReceiver::processPendingDatagrams()
         case CONTROLGROUPVALUE_ID:
         {
             std::string name;
-            double v0,v1,v2,v3,v4,v5;
-            if(udpmessagehandler->decode_ControlGroupValueUDP(items,&v0,&name,&v1,&v2,&v3,&v4,&v5))
+            double v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10;
+            if(udpmessagehandler->decode_ControlGroupValueUDP(items,&v0,&name,&v1,&v2,&v3,&v4,&v5,&v6,&v7,&v8,&v9,&v10))
             {
                 any_comm_recived = true;
                 lastcomm_timer.restart();
@@ -196,7 +196,32 @@ void UDPReceiver::processPendingDatagrams()
                 cgvalue.error_value = v3;
                 cgvalue.error_perc_value = v4;
                 cgvalue.output_value = v5;
+                cgvalue.integral_error = v6;
+                cgvalue.derivative_error = v7;
+                cgvalue.P_output = v8;
+                cgvalue.I_output = v9;
+                cgvalue.D_output = v10;
                 emit new_controlgroupvaluemessage(cgvalue);
+            }
+            break;
+        }
+        case SYSTEMSTATE_ID:
+        {
+            std::string statetext;
+            std::string description;
+            int v0,v1,v2,v3;
+            if(udpmessagehandler->decode_SystemStateUDP(items,&v0,&v1,&v2,&v3,&statetext,&description))
+            {
+                any_comm_recived = true;
+                lastcomm_timer.restart();
+                SystemState state;
+                state.State = v0;
+                state.Option1 = v1;
+                state.Option2 = v2;
+                state.Option3 = v3;
+                state.StateText = statetext;
+                state.Description = description;
+                emit new_systemstatemessage(state);
             }
             break;
         }

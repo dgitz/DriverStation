@@ -36,6 +36,16 @@ struct Diagnostic
     int Message;
     std::string Description;
 };
+struct SystemState
+{
+    int State;
+    int Option1;
+    int Option2;
+    int Option3;
+    std::string StateText;
+    std::string Description;
+};
+
 struct Port
 {
     std::string name;
@@ -115,6 +125,11 @@ struct ControlGroupValue
     double error_value;
     double error_perc_value;
     double output_value;
+    double integral_error;
+    double derivative_error;
+    double P_output;
+    double I_output;
+    double D_output;
 };
 
 #endif

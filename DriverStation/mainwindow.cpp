@@ -6,10 +6,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "127.0.0.1";
-    DSRouter_IPAddress = "10.0.0.110";
+    ROS_Server_IPAddress = "10.0.0.111";
+    DSRouter_IPAddress = "10.0.0.111";
     joystick_available = false;
-    Rover_IPAddress = "127.0.0.1";
+    Rover_IPAddress = "10.0.0.111";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -272,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent) :
     init_icons();
     connect(&myUDPReceiver,SIGNAL(new_controlgroupvaluemessage(ControlGroupValue)),this,SLOT(update_tuningview(ControlGroupValue)));
     connect(&myUDPReceiver,SIGNAL(new_subsystemdiagnosticmessage(std::vector<int>)),this,SLOT(update_diagnosticicons(std::vector<int>)));
+    connect(&myUDPReceiver,SIGNAL(new_systemstatemessage(SystemState)),this,SLOT(update_systemstate(SystemState)));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
@@ -288,108 +289,223 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bDiagnoticFilter->setText("");
     ui->bDiagnoticFilter->setVisible(false);
     elap_timer.start();
+    //SIMULATION CONTROL STUFF
+    simulation_running = 0;
+    transmit_tuning = false;
+    connect(ui->bResetSim,SIGNAL(clicked(bool)),this,SLOT(bSimulationReset(bool)));
+    connect(ui->bPauseResumeSim,SIGNAL(clicked(bool)),this,SLOT(bSimulationPauseResume(bool)));
+    connect(ui->bTransmitTuning,SIGNAL(clicked(bool)),this,SLOT(bTransmitTuning(bool)));
+    ui->bPauseResumeSim->setStyleSheet("color: black;"
+                                   "background-color: orange;"
+                                   "font: bold italic 14px;");
 
-   // TUNING CHART STUFF
-    signal_error_enabled = true;
-    signal_input_enabled = true;
-    signal_command_enabled = true;
-    signal_errorperc_enabled = true;
-    signal_output_enabled = true;
+    // TUNING CHART STUFF
+    #ifdef MOCK_CONTROLGROUPDATA
+        mock_controlgroup_data.name = "LiftCylinderExtensionControl";
+        mock_controlgroup_data.tov = 30.0;
+        mock_controlgroup_data.error_value = 0.0;
+        mock_controlgroup_data.sense_value = 0.0;
+        mock_controlgroup_data.command_value = 0.0;
+        mock_controlgroup_data.output_value = 1500.0;
+        mock_controlgroup_data.error_perc_value = 10.0;
+        connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_mockdata()));
+    #endif
+    ui->bTransmitTuning->setStyleSheet("color: black;"
+                                       "background-color: gray;"
+                                      "font: bold italic 18px;");
+    connect(ui->bTuningStartCapture,SIGNAL(clicked(bool)),this,SLOT(bTuningCaptureStart(bool)));
+    capture_tuningdata = false;
+    overshoot_perc = 0.0;
+    undershot_perc = 0.0;
+    transmit_tuning = false;
+    tuningview_timedelta = 0.0;
     connect(ui->cbSelectErrorSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectErrorSignal(bool)));
     connect(ui->cbSelectSenseSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectSensorSignal(bool)));
     connect(ui->cbSelectCommandSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectCommandSignal(bool)));
     connect(ui->cbSelectOutputSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectOutputSignal(bool)));
     connect(ui->cbSelectErrorPercSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectErrorPercSignal(bool)));
+    connect(ui->cbSelectIntegralErrorSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectIntegralErrorSignal(bool)));
+    connect(ui->cbSelectDerivativeErrorSignal,SIGNAL(clicked(bool)),this,SLOT(cbSelectDerivativeErrorSignal(bool)));
+    connect(ui->cbSelectPOutput,SIGNAL(clicked(bool)),this,SLOT(cbSelectPOutputSignal(bool)));
+    connect(ui->cbSelectIOutput,SIGNAL(clicked(bool)),this,SLOT(cbSelectIOutputSignal(bool)));
+    connect(ui->cbSelectDOutput,SIGNAL(clicked(bool)),this,SLOT(cbSelectDOutputSignal(bool)));
+    connect(ui->bResetTuningGraph,SIGNAL(clicked(bool)),this,SLOT(reset_tuningview(bool)));
+
     lock_tuningview = false;
     controlgroup_view_received = false;
     controlgroup_view_starttime = 0.0;
-
+    sample_time = 0.0;
     tuning_chart = new QChart;
-    connect(ui->bTuningViewReset,SIGNAL(clicked(bool)),SLOT(reset_tuningview(bool)));
    //// QChartView *chartView = new QChartView(m_chart);
    // chartView->setMinimumSize(800, 600);
     tuning_signal_max = -10000000000.0;  //Really low number
     tuning_signal_min = -1*tuning_signal_max;
     tuning_chart_yaxis_min = -0.001;
     tuning_chart_yaxis_max = 0.001;
+    lineseries_zeroline = new QLineSeries(this);
+    lineseries_zeroline->append(0.0,0.0);
+    lineseries_zeroline->append(TUNINGVIEW_TIMELENGTH_SEC,0.0);
     lineseries_controlgroup_view_command = new QLineSeries(this);
     lineseries_controlgroup_view_sensor = new QLineSeries(this);
     lineseries_controlgroup_view_error = new QLineSeries(this);
     lineseries_controlgroup_view_error_perc = new QLineSeries(this);
     lineseries_controlgroup_view_output = new QLineSeries(this);
+    lineseries_controlgroup_view_integralerror = new QLineSeries(this);
+    lineseries_controlgroup_view_derivativeerror = new QLineSeries(this);
+    lineseries_controlgroup_view_poutput = new QLineSeries(this);
+    lineseries_controlgroup_view_ioutput = new QLineSeries(this);
+    lineseries_controlgroup_view_doutput = new QLineSeries(this);
+    lineseries_zeroline->setColor(Qt::black);
 
     lineseries_controlgroup_view_error->setName("Error");
-    ui->cbSelectErrorSignal->setStyleSheet("QCheckBox { color: red }");
-    lineseries_controlgroup_view_error->setColor(Qt::red);
+    ui->cbSelectErrorSignal->setStyleSheet("QCheckBox { color: cyan }");
+    lineseries_controlgroup_view_error->setColor(Qt::cyan);
 
     lineseries_controlgroup_view_output->setName("Output");
     ui->cbSelectOutputSignal->setStyleSheet("QCheckBox { color: blue }");
     lineseries_controlgroup_view_output->setColor(Qt::blue);
-
-    lineseries_controlgroup_view_sensor->setName("Sensor");
-    ui->cbSelectSenseSignal->setStyleSheet("QCheckBox { color: black }");
-    lineseries_controlgroup_view_sensor->setColor(Qt::black);
 
     lineseries_controlgroup_view_command->setName("Command");
     ui->cbSelectCommandSignal->setStyleSheet("QCheckBox { color: green }");
     lineseries_controlgroup_view_command->setColor(Qt::green);
 
     lineseries_controlgroup_view_error_perc->setName("Error (%)");
-    ui->cbSelectErrorPercSignal->setStyleSheet("QCheckBox { color: cyan }");
-    lineseries_controlgroup_view_error_perc->setColor(Qt::cyan);
+    ui->cbSelectErrorPercSignal->setStyleSheet("QCheckBox { color: red }");
+    lineseries_controlgroup_view_error_perc->setColor(Qt::red);
 
+    lineseries_controlgroup_view_integralerror->setName("Int Error");
+    ui->cbSelectIntegralErrorSignal->setStyleSheet("QCheckBox { color: magenta }");
+    lineseries_controlgroup_view_integralerror->setColor(Qt::magenta);
+
+    lineseries_controlgroup_view_derivativeerror->setName("Dev Error");
+    ui->cbSelectDerivativeErrorSignal->setStyleSheet("QCheckBox { color: darkRed }");
+    lineseries_controlgroup_view_derivativeerror->setColor(Qt::darkRed);
+
+    lineseries_controlgroup_view_poutput->setName("P Output");
+    ui->cbSelectPOutput->setStyleSheet("QCheckBox { color: darkGray }");
+    lineseries_controlgroup_view_poutput->setColor(Qt::darkGray);
+
+    lineseries_controlgroup_view_ioutput->setName("I Output");
+    ui->cbSelectIOutput->setStyleSheet("QCheckBox { color: darkBlue }");
+    lineseries_controlgroup_view_ioutput->setColor(Qt::darkBlue);
+
+    lineseries_controlgroup_view_doutput->setName("D Output");
+    ui->cbSelectDOutput->setStyleSheet("QCheckBox { color: darkCyan }");
+    lineseries_controlgroup_view_doutput->setColor(Qt::darkCyan);
+
+    lineseries_controlgroup_view_sensor->setName("Sensor");
+    ui->cbSelectSenseSignal->setStyleSheet("QCheckBox { color: black }");
+    lineseries_controlgroup_view_sensor->setColor(Qt::black);
+
+    tuning_chart->addSeries(lineseries_zeroline);
+    tuning_chart->addSeries(lineseries_controlgroup_view_error_perc);
     tuning_chart->addSeries(lineseries_controlgroup_view_command);
     tuning_chart->addSeries(lineseries_controlgroup_view_sensor);
     tuning_chart->addSeries(lineseries_controlgroup_view_error);
-    tuning_chart->addSeries(lineseries_controlgroup_view_error_perc);
     tuning_chart->addSeries(lineseries_controlgroup_view_output);
+
+    tuning_chart->addSeries(lineseries_controlgroup_view_integralerror);
+
+    tuning_chart->addSeries(lineseries_controlgroup_view_derivativeerror);
+
+    tuning_chart->addSeries(lineseries_controlgroup_view_poutput);
+    tuning_chart->addSeries(lineseries_controlgroup_view_ioutput);
+    tuning_chart->addSeries(lineseries_controlgroup_view_doutput);
+
     QValueAxis *axisX = new QValueAxis;
-    axisX->setRange(0, TUNINGVIEW_TIMESAMPLE_COUNT);
+    axisX->setRange(0, TUNINGVIEW_TIMELENGTH_SEC);
     axisX->setLabelFormat("%g");
     axisX->setTitleText("Time (s)");
     QValueAxis *axisY = new QValueAxis;
     axisY->setRange(tuning_chart_yaxis_min, tuning_chart_yaxis_max);
     axisY->setTitleText("Value");
-    //tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_command);
-    //tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_command);
-   // lineseries_controlgroup_view_command->attachAxis(axisX);
-  // lineseries_controlgroup_view_command->attachAxis(axisY);
-   // lineseries_controlgroup_view_sensor->attachAxis(axisX);
-  // lineseries_controlgroup_view_sensor->attachAxis(axisY);
-    //lineseries_controlgroup_view_error->attachAxis(axisX);
-    //lineseries_controlgroup_view_error->attachAxis(axisY);
-   // lineseries_controlgroup_view_error_perc->attachAxis(axisX);
-    //lineseries_controlgroup_view_error_perc->attachAxis(axisY);
-   // lineseries_controlgroup_view_output->attachAxis(axisX);
-   // lineseries_controlgroup_view_output->attachAxis(axisY);
-    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_sensor);
-    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_sensor);
-    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_command);
-    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_command);
-    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_error);
-    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_error);
+   // tuning_chart->addAxis(axisX,Qt::AlignBottom);
+   // tuning_chart->addAxis(axisY,Qt::AlignLeft);
+    tuning_chart->setAxisX(axisX,lineseries_zeroline);
+    tuning_chart->setAxisY(axisY,lineseries_zeroline);
     tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_error_perc);
     tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_error_perc);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_command);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_command);
+
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_sensor);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_sensor);
+
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_error);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_error);
     tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_output);
     tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_output);
+
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_integralerror);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_integralerror);
+
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_derivativeerror);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_derivativeerror);
+
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_poutput);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_poutput);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_ioutput);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_ioutput);
+    tuning_chart->setAxisX(axisX, lineseries_controlgroup_view_doutput);
+    tuning_chart->setAxisY(axisY, lineseries_controlgroup_view_doutput);
+
     tuning_chart->legend()->hide();
     tuning_chart->setTitle("Tune View");
     tuning_chart->setAnimationOptions(QChart::AllAnimations);
     ui->gTuningView->setChart(tuning_chart);
     ui->gTuningView->setRenderHint(QPainter::Antialiasing);
 
-    //ui->gTuningView->chart()->setAxisX(axisX,m_series);
-   // ui->gTuningView->chart()->setAxisY(axisY,m_series);
-
-    /*
-    QMainWindow window;
-    window.setCentralWidget(chartView);
-    window.resize(400, 300);
-    */
+    cbSelectErrorSignal(ui->cbSelectErrorSignal->isChecked());
+    cbSelectOutputSignal(ui->cbSelectOutputSignal->isChecked());
+    cbSelectSensorSignal(ui->cbSelectSenseSignal->isChecked());
+    cbSelectCommandSignal(ui->cbSelectCommandSignal->isChecked());
+    cbSelectDOutputSignal(ui->cbSelectDOutput->isChecked());
+    cbSelectIOutputSignal(ui->cbSelectIOutput->isChecked());
+    cbSelectPOutputSignal(ui->cbSelectPOutput->isChecked());
+    cbSelectErrorPercSignal(ui->cbSelectErrorPercSignal->isChecked());
+    cbSelectIntegralErrorSignal(ui->cbSelectIntegralErrorSignal->isChecked());
+    cbSelectDerivativeErrorSignal(ui->cbSelectDerivativeErrorSignal->isChecked());
 
 
 }
+void MainWindow::update_mockdata()
+{
+#ifdef MOCK_CONTROLGROUPDATA
+    mock_controlgroup_data.tov += 0.05;
+    mock_controlgroup_data.output_value+=10;
+    if(mock_controlgroup_data.output_value > 2000)
+    {
+        mock_controlgroup_data.output_value = 1000;
+    }
+    double t = mock_controlgroup_data.tov;
+    double v1 = exp(-t/16.0);
+    double v2 = cos(t*2.0*M_PI/32.0);
+    mock_controlgroup_data.error_perc_value = -10.0*v1*v2;
+    mock_controlgroup_data.error_value = mock_controlgroup_data.output_value*(cos(mock_controlgroup_data.tov*M_PI));    update_tuningview(mock_controlgroup_data);
+    mock_controlgroup_data.sense_value-=200;
+    if(mock_controlgroup_data.sense_value < -10000)
+    {
+        mock_controlgroup_data.sense_value = 10000;
+    }
+    mock_controlgroup_data.error_value = fmod( mock_controlgroup_data.tov,1.0);
+    double v = 1.0/mock_controlgroup_data.error_perc_value;
+    if(fabs(v) > 2000.0)
+    {
+        v = 2000.0;
+    }
+    mock_controlgroup_data.command_value = v;
+    mock_controlgroup_data.integral_error+=2000.0;
+    if(mock_controlgroup_data.integral_error > 1000000.0)
+    {
+        mock_controlgroup_data.integral_error = 100000.0;
+    }
+    mock_controlgroup_data.derivative_error = -mock_controlgroup_data.output_value;
+    mock_controlgroup_data.P_output = mock_controlgroup_data.output_value*0.75;
+    mock_controlgroup_data.I_output = mock_controlgroup_data.output_value*0.2;
+    mock_controlgroup_data.D_output = -20.0*mock_controlgroup_data.output_value;
 
+#endif
+}
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     switch(event->key())
@@ -407,6 +523,28 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     default:
         break;
+    }
+}
+void MainWindow::bTuningCaptureStart(const bool v)
+{
+    capture_tuningdata = !capture_tuningdata;
+    overshoot_perc = 0.0;
+    undershot_perc = 0.0;
+}
+void MainWindow::bTransmitTuning(const bool v)
+{
+    transmit_tuning = !transmit_tuning;
+    if(transmit_tuning == false)
+    {
+        ui->bTransmitTuning->setStyleSheet("color: black;"
+                                           "background-color: gray;"
+                                          "font: bold italic 18px;");
+    }
+    else
+    {
+        ui->bTransmitTuning->setStyleSheet("color: black;"
+                                           "background-color: green;"
+                                          "font: bold italic 18px;");
     }
 }
 void MainWindow::cbSelectErrorSignal(bool v)
@@ -432,6 +570,31 @@ void MainWindow::cbSelectOutputSignal(bool v)
 void MainWindow::cbSelectErrorPercSignal(bool v)
 {
     signal_errorperc_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectIntegralErrorSignal(bool v)
+{
+    signal_integralerror_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectDerivativeErrorSignal(bool v)
+{
+    signal_derivativeerror_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectPOutputSignal(bool v)
+{
+    signal_poutput_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectIOutputSignal(bool v)
+{
+    signal_ioutput_enabled = v;
+    reset_tuningview(true);
+}
+void MainWindow::cbSelectDOutputSignal(bool v)
+{
+    signal_doutput_enabled = v;
     reset_tuningview(true);
 }
 void MainWindow::cameraStreamChanged(int v)
@@ -464,6 +627,28 @@ void MainWindow::newCameraImage(QImage img, bool v)
     }
     camera_image = img;
 
+}
+void MainWindow::update_systemstate(const SystemState &state)
+{
+    if(state.State == ROVERSTATE_SIMULATION)
+    {
+        simulation_running = state.Option1;
+        if(simulation_running == ROVERSTATE_SIMULATION_NOTRUNNING)
+        {
+            ui->bPauseResumeSim->setStyleSheet("color: black;"
+                                           "background-color: orange;"
+                                           "font: bold italic 14px;");
+            ui->bPauseResumeSim->setText("RESUME SIM");
+        }
+        else if(simulation_running == ROVERSTATE_SIMULATION_RUNNING)
+        {
+            ui->bPauseResumeSim->setStyleSheet("color: black;"
+                                           "background-color: green;"
+                                           "font: bold italic 14px;");
+            QString tempstr = "PAUSE SIM: " + QString::fromUtf8(state.StateText.c_str());
+            ui->bPauseResumeSim->setText(tempstr);
+        }
+    }
 }
 void MainWindow::update_cameraoverlay()
 {
@@ -501,7 +686,6 @@ void MainWindow::controlGroupChanged(QString v)
 
         }
     }
-    qDebug() << "P: " << QString::number(current_cg.gain.P);
     ui->dTuningP->setValue(current_cg.gain.P);
     ui->dTuningI->setValue(current_cg.gain.I);
     ui->dTuningD->setValue(current_cg.gain.D);
@@ -825,31 +1009,39 @@ void MainWindow::bTuningPSmaller_pressed()
 }
 void MainWindow::bTuningIBigger_pressed()
 {
+    double old_gain = current_cg.gain.I;
     double range = current_cg.gain.I_max-current_cg.gain.I_min;
     current_cg.gain.I_max = current_cg.gain.I + range*1.0;
     current_cg.gain.I_min = current_cg.gain.I - range*1.0;
-    ui->dTuningI->setValue(current_cg.gain.I);
+    current_cg.gain.I = old_gain;
+    ui->dTuningI->setValue(0);
 }
 void MainWindow::bTuningISmaller_pressed()
 {
+    double old_gain = current_cg.gain.I;
     double range = current_cg.gain.I_max-current_cg.gain.I_min;
     current_cg.gain.I_max = current_cg.gain.I + range/4.0;
     current_cg.gain.I_min = current_cg.gain.I - range/4.0;
-    ui->dTuningI->setValue(current_cg.gain.I);
+    current_cg.gain.I = old_gain;
+    ui->dTuningI->setValue(0);
 }
 void MainWindow::bTuningDBigger_pressed()
 {
+    double old_gain = current_cg.gain.D;
     double range = current_cg.gain.D_max-current_cg.gain.D_min;
     current_cg.gain.D_max = current_cg.gain.D + range*1.0;
     current_cg.gain.D_min = current_cg.gain.D - range*1.0;
-    ui->dTuningD->setValue(current_cg.gain.D);
+    current_cg.gain.D = old_gain;
+    ui->dTuningD->setValue(0);
 }
 void MainWindow::bTuningDSmaller_pressed()
 {
+    double old_gain = current_cg.gain.D;
     double range = current_cg.gain.D_max-current_cg.gain.D_min;
     current_cg.gain.D_max = current_cg.gain.D + range/4.0;
     current_cg.gain.D_min = current_cg.gain.D - range/4.0;
-    ui->dTuningD->setValue(current_cg.gain.D);
+    current_cg.gain.D = old_gain;
+    ui->dTuningD->setValue(0);
 }
 
 
@@ -908,7 +1100,7 @@ void MainWindow::update_commstatus()
     else if((time_sincelastcomm < 3000))
     {
         ui->tEStopState->setStyleSheet("color: black;"
-                                       "background-color: orange;"
+                                       "background-color: green;"
                                        "font: bold italic 36px;");
         ui->tEStopState->setText("COMM OK");
     }
@@ -1072,12 +1264,16 @@ void MainWindow::reset_tuningview(bool v)
     lock_tuningview = true;
     tuning_signal_max = -10000000000.0;
     tuning_signal_min = -1*tuning_signal_max;
-    controlgroup_view_received = false;
     lineseries_controlgroup_view_command->clear();
     lineseries_controlgroup_view_sensor->clear();
     lineseries_controlgroup_view_error->clear();
     lineseries_controlgroup_view_error_perc->clear();
     lineseries_controlgroup_view_output->clear();
+    lineseries_controlgroup_view_integralerror->clear();
+    lineseries_controlgroup_view_derivativeerror->clear();
+    lineseries_controlgroup_view_poutput->clear();
+    lineseries_controlgroup_view_ioutput->clear();
+    lineseries_controlgroup_view_doutput->clear();
     tuning_chart_yaxis_min = -0.001;
     tuning_chart_yaxis_max = 0.001;
     lock_tuningview = false;
@@ -1377,24 +1573,26 @@ void MainWindow::update_CalibrationPanel()
 void MainWindow::update_TuningPanel()
 {
 
-   double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
-   double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
-   double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
+    double Pscaled = scale_value((double)ui->dTuningP->value(),(current_cg.gain.P_max+current_cg.gain.P_min)/2.0,-1000.0,1000.0,current_cg.gain.P_min,current_cg.gain.P_max,0.0);
+    double Iscaled = scale_value((double)ui->dTuningI->value(),(current_cg.gain.I_max+current_cg.gain.I_min)/2.0,-1000.0,1000.0,current_cg.gain.I_min,current_cg.gain.I_max,0.0);
+    double Dscaled = scale_value((double)ui->dTuningD->value(),(current_cg.gain.D_max+current_cg.gain.D_min)/2.0,-1000.0,1000.0,current_cg.gain.D_min,current_cg.gain.D_max,0.0);
 
-   current_cg.gain.P = Pscaled;
-   current_cg.gain.I = Iscaled;
-   current_cg.gain.D = Dscaled;
-    //   qDebug() << "gain: " << QString::number(current_cg.gain.P);
-
+    current_cg.gain.P = Pscaled;
+    current_cg.gain.I = Iscaled;
+    current_cg.gain.D = Dscaled;
     ui->lTuningPValue->setText(QString().setNum(current_cg.gain.P,'k',4));
     ui->lTuningIValue->setText(QString().setNum(current_cg.gain.I,'k',4));
     ui->lTuningDValue->setText(QString().setNum(current_cg.gain.D,'k',4));
     ui->lTuningMaxValue->setText(QString::number(ui->hsTuningMaxValue->value()));
     ui->lTuningMinValue->setText(QString::number(ui->hsTuningMinValue->value()));
     ui->lTuningDefaultValue->setText(QString::number(ui->hsTuningDefaultValue->value()));
-    new_udpmsgsent(UDP_TuneControlGroup_ID);
-    myUDPTransmitter.send_TuneControlGroup_0xAB39(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D,
+
+    if(transmit_tuning == true)
+    {
+        new_udpmsgsent(UDP_TuneControlGroup_ID);
+        myUDPTransmitter.send_TuneControlGroup_0xAB39(current_cg.name.toStdString(),current_cg.gain.type.toStdString(),current_cg.gain.P,current_cg.gain.I,current_cg.gain.D,
                                                   ui->hsTuningMaxValue->value(),ui->hsTuningMinValue->value(),ui->hsTuningDefaultValue->value());
+    }
     update_OperationPanel();
 }
 
@@ -1411,6 +1609,10 @@ void MainWindow::update_devicelist()
 }
 void MainWindow::update_tuningview(const ControlGroupValue &cgvalue)
 {
+    if(ui->cbControlGroup->currentText() != QString::fromUtf8(cgvalue.name.c_str()))
+    {
+        return;
+    }
     new_udpmsgreceived(UDP_ControlGroupValue_ID);
     if(lock_tuningview == false)
     {
@@ -1419,7 +1621,25 @@ void MainWindow::update_tuningview(const ControlGroupValue &cgvalue)
             controlgroup_view_starttime = cgvalue.tov;
             controlgroup_view_received = true;
         }
-        double sample_time = cgvalue.tov-controlgroup_view_starttime;
+        double new_sample_time = cgvalue.tov-controlgroup_view_starttime;
+        double dt = new_sample_time-sample_time;
+        sample_time = new_sample_time;
+        tuningview_timedelta += dt;
+
+        if(capture_tuningdata == true)
+        {
+            double old_value = lineseries_controlgroup_view_error_perc->at(lineseries_controlgroup_view_error_perc->count()-1).y();
+            double sign = old_value*cgvalue.error_perc_value;
+            if(sign > 0.0)
+            {
+
+            }
+            else
+            {
+               // ZERO CROSSING
+            }
+
+        }
         QVector<double> y_list;
         if(signal_error_enabled)
         {
@@ -1446,8 +1666,34 @@ void MainWindow::update_tuningview(const ControlGroupValue &cgvalue)
             y_list.push_back( cgvalue.error_perc_value);
             lineseries_controlgroup_view_error_perc->append((sample_time), cgvalue.error_perc_value);
         }
+        if(signal_integralerror_enabled)
+        {
+            y_list.push_back( cgvalue.integral_error);
+            lineseries_controlgroup_view_integralerror->append((sample_time), cgvalue.integral_error);
+        }
+        if(signal_derivativeerror_enabled)
+        {
+            y_list.push_back( cgvalue.derivative_error);
+            lineseries_controlgroup_view_derivativeerror->append((sample_time), cgvalue.derivative_error);
+        }
+        if(signal_poutput_enabled)
+        {
+            y_list.push_back( cgvalue.P_output);
+            lineseries_controlgroup_view_poutput->append((sample_time), cgvalue.P_output);
+        }
+        if(signal_ioutput_enabled)
+        {
+            y_list.push_back( cgvalue.I_output);
+            lineseries_controlgroup_view_ioutput->append((sample_time), cgvalue.I_output);
+        }
+        if(signal_doutput_enabled)
+        {
+            y_list.push_back( cgvalue.D_output);
+            lineseries_controlgroup_view_doutput->append((sample_time), cgvalue.D_output);
+        }
         double min = *std::min_element(y_list.constBegin(), y_list.constEnd());
         double max = *std::max_element(y_list.constBegin(), y_list.constEnd());
+
         if(max > tuning_signal_max)
         {
             tuning_signal_max = max;
@@ -1456,77 +1702,79 @@ void MainWindow::update_tuningview(const ControlGroupValue &cgvalue)
         {
             tuning_signal_min = min;
         }
+
         bool max_changed = false;
         bool min_changed = false;
         if(tuning_signal_max > (0.9*tuning_chart_yaxis_max))
         {
-            qDebug() << "x1";
             max_changed = true;
             double prev = tuning_chart_yaxis_max;
             tuning_chart_yaxis_max = tuning_signal_max*1.1;
-            if(fabs(tuning_chart_yaxis_max) < .000001)
-            {
-                tuning_chart_yaxis_max = prev;
-            }
         }
         if(tuning_signal_max < (0.9*tuning_chart_yaxis_max))
         {
-            qDebug() << "x2";
             max_changed = true;
             double prev = tuning_chart_yaxis_max;
             tuning_chart_yaxis_max = tuning_signal_max;
-            if(fabs(tuning_chart_yaxis_max) < .000001)
-            {
-                tuning_chart_yaxis_max = prev;
-            }
         }
         if(tuning_signal_min < (0.9*tuning_chart_yaxis_min))
         {
-            qDebug() << "x3";
             min_changed = true;
             double prev = tuning_chart_yaxis_min;
             tuning_chart_yaxis_min = tuning_signal_min*1.1;
-            if(fabs(tuning_chart_yaxis_min) < .000001)
-            {
-                tuning_chart_yaxis_min = prev;
-            }
         }
         if(tuning_signal_min > (0.9*tuning_chart_yaxis_min))
         {
-            qDebug() << "x4";
             min_changed = true;
             double prev = tuning_chart_yaxis_min;
             tuning_chart_yaxis_min = tuning_signal_min;
-            if(fabs(tuning_chart_yaxis_min) < .000001)
-            {
-                tuning_chart_yaxis_min = prev;
-            }
         }
-        qDebug() << "x1: " << min << " x2: " << tuning_chart_yaxis_min << " x3: " << max << " x4: " << tuning_chart_yaxis_max;
-
-        if(max_changed == true)
+       // qDebug() << "y: " << y_list.size() << " max: " << max << " min: " << min << " tmax: " << tuning_signal_max << " tmin: " << tuning_signal_min
+        //         << " cmax: " << tuning_chart_yaxis_max << " cmin: " << tuning_chart_yaxis_min;
+        double diff = fabs(tuning_chart_yaxis_max-tuning_chart_yaxis_min);
+        if(diff > .000001)
         {
+            if((max_changed == true) || (min_changed == true))
+            {
 
-            tuning_chart->axisY()->setRange(tuning_chart_yaxis_min, tuning_chart_yaxis_max);
-         }
+                tuning_chart->axisY()->setRange(tuning_chart_yaxis_min, tuning_chart_yaxis_max);
+             }
+        }
+
+        if(tuningview_timedelta > (0.75*TUNINGVIEW_TIMELENGTH_SEC))
+        {
+            lineseries_zeroline->append((sample_time-dt)+TUNINGVIEW_TIMELENGTH_SEC,0.0);
+            tuning_chart->axisX()->setRange((sample_time-dt), (sample_time-dt)+TUNINGVIEW_TIMELENGTH_SEC);
+            tuningview_timedelta = 0.0;
+            tuning_chart_yaxis_min = 0.0;
+            tuning_chart_yaxis_max = 0.0;
+            tuning_signal_max = -1000000.0;
+            tuning_signal_min = 1000000.0;
+        }
+        if(max > tuning_chart_yaxis_max)
+        {
+            qDebug() << "err1";
+        }
+        else if(min < tuning_chart_yaxis_min)
+        {
+            qDebug() << "err2";
+        }
+        if(capture_tuningdata == true)
+        {
+            if(cgvalue.error_perc_value < undershot_perc)
+            {
+                undershot_perc = cgvalue.error_perc_value;
+            }
+            if(cgvalue.error_perc_value > overshoot_perc)
+            {
+                overshoot_perc = cgvalue.error_perc_value;
+            }
+            ui->tOvershootPerc->setText(QString::number(overshoot_perc));
+            ui->tUndershootPerc->setText(QString::number(undershot_perc));
+        }
     }
 
 }
-/*
-        if(y< tuning_chart_yaxis_min || y > tuning_chart_yaxis_max)
-        {
-            if(y < tuning_chart_yaxis_min)
-            {
-                tuning_chart_yaxis_min = y;
-            }
-            if(y> tuning_chart_yaxis_max)
-            {
-                tuning_chart_yaxis_max = y;
-            }
-            tuning_chart->axisY()->setRange(tuning_chart_yaxis_min-2.0, tuning_chart_yaxis_max+2.0);
-         }
- * */
-
 void MainWindow::update_diagnosticicons(const std::vector<int>& levels)
 {
     new_udpmsgreceived(UDP_SubsystemDiagnostic_ID);
@@ -2445,4 +2693,23 @@ int MainWindow::map_diagnosticlevel_toiconindex(int v)
     default:
         return 3;
     }
+}
+//SIMULATION CONTROL
+void MainWindow::bSimulationReset(const bool)
+{
+    new_udpmsgsent(UDP_Command_ID);
+    myUDPTransmitter.send_Command_0xAB02(ROVERCOMMAND_SIMULATIONCCONTROL,ROVERCOMMAND_SIMULATIONCONTROL_RESETWORLD,0,0,"","");
+}
+void MainWindow::bSimulationPauseResume(const bool)
+{
+    new_udpmsgsent(UDP_Command_ID);
+    if(simulation_running == ROVERSTATE_SIMULATION_RUNNING)
+    {
+        myUDPTransmitter.send_Command_0xAB02(ROVERCOMMAND_SIMULATIONCCONTROL,ROVERCOMMAND_SIMULATIONCONTROL_PAUSESIM,0,0,"","");
+    }
+    else if((simulation_running == ROVERSTATE_SIMULATION_NOTRUNNING) || (simulation_running == ROVERSTATE_SIMULATION_UNDEFINED))
+    {
+        myUDPTransmitter.send_Command_0xAB02(ROVERCOMMAND_SIMULATIONCCONTROL,ROVERCOMMAND_SIMULATIONCONTROL_STARTSIM,0,0,"","");
+    }
+
 }

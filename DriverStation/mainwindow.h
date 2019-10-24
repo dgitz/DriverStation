@@ -59,7 +59,8 @@
 #define CALIBRATIONTAB_JOYSTICK 0
 #define CALIBRATIONTAB_TUNING 1
 
-#define TUNINGVIEW_TIMESAMPLE_COUNT 60
+//#define MOCK_CONTROLGROUPDATA
+#define TUNINGVIEW_TIMELENGTH_SEC 120.0
 
 //using namespace QtCharts;
 namespace Ui {
@@ -94,6 +95,7 @@ public slots:
     void reset_tuningview(const bool);
     void update_tuningview(const ControlGroupValue &cgvalue);
     void update_messageviewer(const Diagnostic &diag);
+    void update_systemstate(const SystemState &state);
     void update_armeddisarmed_text(const int);
     void update_diagnosticicons(const std::vector<int>&);
     void update_resource(const Resource &resource);
@@ -117,7 +119,7 @@ public slots:
     void send_Heartbeat_message();
     void bArmDisarm_pressed();
     void maintabChanged();
-    void calibrationtabChanged();
+
     void b1_pressed();
     void b2_pressed();
     void b3_pressed();
@@ -127,34 +129,26 @@ public slots:
     void update_CalibrationGroup();
     void update_TuningPanel();
     void update_DiagnosticTab();
-    void calibrate_Axis(const int);
-    void calibrate_XAxis(const bool);
-    void calibrate_YAxis(const bool);
-    void calibrate_ZAxis(const bool);
-    void save_calibration(const bool);
-    void cancel_calibration(const bool);
+    void update_mockdata();
+
     void check_network();
     void read_ControlGroupFile();
     void check_ROSServer_finished(int code, QProcess::ExitStatus status);
     void check_DSRouter_finished(int code, QProcess::ExitStatus status);
     void check_Rover_finished(int code, QProcess::ExitStatus status);
     void bRTH_pressed();
-    void controlGroupChanged(QString v);
-    void cameraStreamChanged(int v);
-    void bTuningPBigger_pressed();
-    void bTuningPSmaller_pressed();
-    void bTuningIBigger_pressed();
-    void bTuningISmaller_pressed();
-    void bTuningDBigger_pressed();
-    void bTuningDSmaller_pressed();
-    void bTuningPReset_pressed();
-    void bTuningIReset_pressed();
-    void bTuningDReset_pressed();
 
+    //SIMULATION CONTROL
+    void bSimulationReset(const bool);
+    void bSimulationPauseResume(const bool);
+    //CAMERA
+    void cameraStreamChanged(int v);
     void newCameraImage(QImage,bool);
     void newGSTCameraImage(guint8* map,bool);
     void newCameraStatus(uint8_t);
     void update_cameraoverlay();
+
+    //DIAGNOSTIC WINDOW
     void bDiagnosticFilter_pressed();
     void bDiagnosticIcon_ElectricalButton_pressed();
     void bDiagnosticIcon_SoftwareButton_pressed();
@@ -168,11 +162,36 @@ public slots:
     void bDiagnosticIcon_TimingButton_pressed();
     void bDiagnosticIcon_SystemResourceButton_pressed();
 
+    //TUNING & CALIBRATION VIEW
+    void bTransmitTuning(const bool);
+    void calibrationtabChanged();
+    void calibrate_Axis(const int);
+    void calibrate_XAxis(const bool);
+    void calibrate_YAxis(const bool);
+    void calibrate_ZAxis(const bool);
+    void save_calibration(const bool);
+    void cancel_calibration(const bool);
+    void controlGroupChanged(QString v);
+    void bTuningCaptureStart(const bool);
+    void bTuningPBigger_pressed();
+    void bTuningPSmaller_pressed();
+    void bTuningIBigger_pressed();
+    void bTuningISmaller_pressed();
+    void bTuningDBigger_pressed();
+    void bTuningDSmaller_pressed();
+    void bTuningPReset_pressed();
+    void bTuningIReset_pressed();
+    void bTuningDReset_pressed();
     void cbSelectSensorSignal(const bool);
     void cbSelectErrorSignal(const bool);
     void cbSelectCommandSignal(const bool);
     void cbSelectOutputSignal(const bool);
     void cbSelectErrorPercSignal(const bool);
+    void cbSelectIntegralErrorSignal(const bool);
+    void cbSelectDerivativeErrorSignal(const bool);
+    void cbSelectPOutputSignal(const bool);
+    void cbSelectIOutputSignal(const bool);
+    void cbSelectDOutputSignal(const bool);
 
 
 
@@ -254,7 +273,7 @@ private:
     QTime ROSServer_pingtimer;
     QTime Rover_pingtimer;
     QTime DSRouter_timer;
-
+    int simulation_running;
     std::vector<ControlGroup> controlgroups;
     ControlGroup current_cg;
     std::vector<Port> ports;
@@ -265,6 +284,13 @@ private:
     std::vector<Icon> icons;
     std::vector<int> icon_levels;
     int diagnostictype_filter;
+
+    // TUNING CHART STUFF
+#ifdef MOCK_CONTROLGROUPDATA
+    ControlGroupValue mock_controlgroup_data;
+#endif
+    bool transmit_tuning;
+    bool capture_tuningdata;
     bool lock_tuningview;
     bool controlgroup_view_received;
     double controlgroup_view_starttime;
@@ -276,15 +302,28 @@ private:
     bool signal_command_enabled;
     bool signal_errorperc_enabled;
     bool signal_output_enabled;
+    bool signal_integralerror_enabled;
+    bool signal_derivativeerror_enabled;
+    bool signal_poutput_enabled;
+    bool signal_ioutput_enabled;
+    bool signal_doutput_enabled;
     double tuning_signal_max;
     double tuning_signal_min;
+    double overshoot_perc;
+    double undershot_perc;
+    QtCharts::QLineSeries *lineseries_zeroline;
     QtCharts::QLineSeries *lineseries_controlgroup_view_command;// = new QLineSeries();
     QtCharts::QLineSeries *lineseries_controlgroup_view_sensor;
     QtCharts::QLineSeries *lineseries_controlgroup_view_error;
     QtCharts::QLineSeries *lineseries_controlgroup_view_error_perc;
     QtCharts::QLineSeries *lineseries_controlgroup_view_output;
-
-
+    QtCharts::QLineSeries *lineseries_controlgroup_view_integralerror;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_derivativeerror;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_poutput;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_ioutput;
+    QtCharts::QLineSeries *lineseries_controlgroup_view_doutput;
+    double tuningview_timedelta;
+    double sample_time;
     //QtCharts::QLineSeries *m_series;
     //QtCharts::QChart *tuning_chart;
 

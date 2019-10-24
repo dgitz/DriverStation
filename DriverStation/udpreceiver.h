@@ -92,6 +92,7 @@ signals:
     void new_image(const QPixmap&);
     void new_subsystemdiagnosticmessage(const std::vector<int>&);
     void new_controlgroupvaluemessage(const ControlGroupValue&);
+    void new_systemstatemessage(const SystemState&);
 private:
 
     QUdpSocket *udpSocket;
