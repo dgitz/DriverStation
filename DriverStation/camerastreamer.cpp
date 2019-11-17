@@ -109,7 +109,7 @@ GstFlowReturn CameraStreamer::newBufferCallback(GstAppSink *app_sink, void *obj)
        GstBuffer *buffer = gst_sample_get_buffer (sample);
 
        gst_buffer_map (buffer, &map, GST_MAP_READ);
-
+#ifdef OPENCV_ENABLED
       cv::Mat temp_mat = cv::Mat(cv::Size(width, height+height/2), CV_8UC1, (char*)map.data);
        //((CameraStreamer*)obj)->emitNewGSTImage(map.data);
        //gst_buffer_unmap (buffer, &map);
@@ -120,6 +120,8 @@ GstFlowReturn CameraStreamer::newBufferCallback(GstAppSink *app_sink, void *obj)
        QImage rgb(result.size().width,result.size().height,QImage::Format_RGB888);
        memcpy(rgb.scanLine(0), (unsigned char*)result.data, rgb.width() * rgb.height() * result.channels());
        ((CameraStreamer*)obj)->emitNewImage(rgb);
+
+#endif
        gst_buffer_unmap (buffer, &map);
        gst_sample_unref (sample);
        return GST_FLOW_OK;

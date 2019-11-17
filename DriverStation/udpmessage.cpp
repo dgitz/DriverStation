@@ -1,5 +1,5 @@
 /***************AUTO-GENERATED.  DO NOT EDIT********************/
-/***Created on:2019-05-08 07:54:47.453519***/
+/***Created on:2019-10-20 03:43:36.664668***/
 #include "udpmessage.h"
 UDPMessageHandler::UDPMessageHandler(){}
 UDPMessageHandler::~UDPMessageHandler(){}
@@ -175,14 +175,12 @@ int UDPMessageHandler::decode_EStopUDP(QList<QByteArray> items,std::string* Devi
 	*State=(int)items.at(2).toInt();
 	return 1;
 }
-QString UDPMessageHandler::encode_TuneControlGroupUDP(std::string ControlGroupName,std::string Type,double value1,double value2,double value3,int maxvalue,int minvalue,int defaultvalue)
+QString UDPMessageHandler::encode_TuneControlGroupUDP(std::string ControlGroupName,double value1,double value2,double value3,int maxvalue,int minvalue,int defaultvalue)
 {
 	QString tempstr = "";
 	tempstr.append(UDP_TuneControlGroup_ID);
 	tempstr.append(",");
 	tempstr.append(QString::fromStdString(ControlGroupName));
-	tempstr.append(",");
-	tempstr.append(QString::fromStdString(Type));
 	tempstr.append(",");
 	tempstr.append(QString::number(value1));
 	tempstr.append(",");
@@ -221,5 +219,43 @@ int UDPMessageHandler::decode_SubsystemDiagnosticUDP(QList<QByteArray> items,int
 	*Pose=(int)items.at(9).toInt();
 	*Timing=(int)items.at(10).toInt();
 	*System_Resource=(int)items.at(11).toInt();
+	return 1;
+}
+int UDPMessageHandler::decode_SystemSnapshotStateUDP(QList<QByteArray> items,std::string* State,int* PercentComplete,int* SystemSnapshotCount,std::string* SourceDevice,std::string* SystemSnapshotPath)
+{
+	if(items.size() != 6){ return 0; }
+	*State=items.at(1).toStdString();
+	*PercentComplete=(int)items.at(2).toInt();
+	*SystemSnapshotCount=(int)items.at(3).toInt();
+	*SourceDevice=items.at(4).toStdString();
+	*SystemSnapshotPath=items.at(5).toStdString();
+	return 1;
+}
+int UDPMessageHandler::decode_ControlGroupValueUDP(QList<QByteArray> items,double* tov,std::string* ControlGroupName,double* Command,double* Sense,double* Error,double* Error_perc,double* Output,double* IntegralError,double* DerivativeError,double* P_Output,double* I_Output,double* D_Output)
+{
+	if(items.size() != 13){ return 0; }
+	*tov=items.at(1).toDouble();
+	*ControlGroupName=items.at(2).toStdString();
+	*Command=items.at(3).toDouble();
+	*Sense=items.at(4).toDouble();
+	*Error=items.at(5).toDouble();
+	*Error_perc=items.at(6).toDouble();
+	*Output=items.at(7).toDouble();
+	*IntegralError=items.at(8).toDouble();
+	*DerivativeError=items.at(9).toDouble();
+	*P_Output=items.at(10).toDouble();
+	*I_Output=items.at(11).toDouble();
+	*D_Output=items.at(12).toDouble();
+	return 1;
+}
+int UDPMessageHandler::decode_SystemStateUDP(QList<QByteArray> items,int* State,int* Option1,int* Option2,int* Option3,std::string* StateText,std::string* Description)
+{
+	if(items.size() != 7){ return 0; }
+	*State=(int)items.at(1).toInt();
+	*Option1=(int)items.at(2).toInt();
+	*Option2=(int)items.at(3).toInt();
+	*Option3=(int)items.at(4).toInt();
+	*StateText=items.at(5).toStdString();
+	*Description=items.at(6).toStdString();
 	return 1;
 }

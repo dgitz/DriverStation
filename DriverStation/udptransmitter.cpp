@@ -132,7 +132,7 @@ bool UDPTransmitter::send_TuneControlGroup_0xAB39(std::string name, std::string 
     QByteArray datagram;
     QDataStream out(&datagram,QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_3);
-    QString buffer = udpmessagehandler->encode_TuneControlGroupUDP(name,type,v1,v2,v3,maxvalue,minvalue,defaultvalue);
+    QString buffer = udpmessagehandler->encode_TuneControlGroupUDP(name,v1,v2,v3,maxvalue,minvalue,defaultvalue);
     xmit_socket->writeDatagram(buffer.toUtf8(),QHostAddress(RC_Server),5678);
     //qDebug() << "Send AB31 to" << RC_Server << " : " << buffer << endl;
     TuneControlGroup_0A39_timer.restart();

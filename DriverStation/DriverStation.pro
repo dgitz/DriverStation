@@ -22,21 +22,24 @@ CONFIG+=link_pkgconfig
 #PKGCONFIG+=Qt5GStreamer-1.0
 
 #INCLUDEPATH += $$QWTPATH/include/Qt5GStreamer
+#CONFIG += c++11
+#QMAKE_CXXFLAGS += -std=c++11
 LIBS += -L$$QWTPATH/lib  -lgstreamer-1.0 -lgstapp-1.0 -lglib-2.0 -lgobject-2.0 #-lQt5GStreamer-1.0
+#INCLUDEPATH += /usr/local/include/opencv
 INCLUDEPATH += /usr/local/include/opencv
-LIBS += -L/usr/local/lib \
--lopencv_core \
--lopencv_imgproc \
--lopencv_highgui \
--lopencv_ml \
--lopencv_video \
--lopencv_features2d \
--lopencv_calib3d \
--lopencv_objdetect \
--lopencv_contrib \
--lopencv_legacy \
--lopencv_flann \
--lopencv_imgcodecs
+LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui
+#-lopencv_core \
+#-lopencv_imgproc \
+#-lopencv_highgui \
+#-lopencv_ml \
+#-lopencv_video \
+#-lopencv_features2d \
+#-lopencv_calib3d \
+#-lopencv_objdetect \
+#-lopencv_contrib \
+#-lopencv_legacy \
+#-lopencv_flann \
+#-lopencv_imgcodecs
 
 INCLUDEPATH += /usr/include/glib-2.0/ \
                /usr/lib/x86_64-linux-gnu/glib-2.0/include/ \

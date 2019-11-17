@@ -36,6 +36,16 @@ struct Diagnostic
     int Message;
     std::string Description;
 };
+struct SystemState
+{
+    int State;
+    int Option1;
+    int Option2;
+    int Option3;
+    std::string StateText;
+    std::string Description;
+};
+
 struct Port
 {
     std::string name;
@@ -96,10 +106,30 @@ struct Gain
     double I_max;
     double D_min;
     double D_max;
+
 };
 struct ControlGroup
 {
     QString name;
     Gain gain;
+    double output_max;
+    double output_min;
+    double output_default;
 };
+struct ControlGroupValue
+{
+    double tov;
+    std::string name;
+    double command_value;
+    double sense_value;
+    double error_value;
+    double error_perc_value;
+    double output_value;
+    double integral_error;
+    double derivative_error;
+    double P_output;
+    double I_output;
+    double D_output;
+};
+
 #endif

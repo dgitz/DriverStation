@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include <QApplication>
-
+#include <QtCharts/QChartView>
 
 
 
@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.showMaximized();
+
+
     /*
     QGst::init(&argc, &argv);
     //Need to implement this string as a string
