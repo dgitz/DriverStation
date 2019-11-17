@@ -6,10 +6,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.111";
-    DSRouter_IPAddress = "10.0.0.111";
+    ROS_Server_IPAddress = "10.0.0.190";
+    DSRouter_IPAddress = "10.0.0.190";
     joystick_available = false;
-    Rover_IPAddress = "10.0.0.111";
+    Rover_IPAddress = "10.0.0.190";
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -156,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         QMessageBox::information(this,
                                  tr("Driver Station"),
-                                 tr("Joystick Not Found."));
+                                 tr("Joystick Not Found. Sending default RC Commands."));
         qDebug() << "Couldn't open joystick.";
         //kill_application(true);
     }
@@ -175,7 +175,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ioctl(joy_fd,JSIOCGBUTTONS,&num_buttons);
         if((num_axes == 0) || (num_buttons == 0))
         {
-            qDebug() << "Couldn't read joystick.";
+            qDebug() << "Couldn't read joystick.  Sending default RC Commands.";
             joystick_available = false;
             //kill_application(true);
         }
@@ -1494,6 +1494,31 @@ void MainWindow::update_OperationPanel()
                                                    0,
                                                    0,
                                                    0);
+    }
+    else
+    {
+        QDateTime currentdatetime = QDateTime::currentDateTime();
+        quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
+        new_udpmsgsent(UDP_RemoteControl_ID);
+
+        myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0);
+
     }
 }
 
