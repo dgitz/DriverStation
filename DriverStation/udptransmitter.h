@@ -70,7 +70,7 @@ class UDPTransmitter : public QObject
 public:
     UDPTransmitter(QWidget *parent = 0);
     bool set_RemoteControl_message();
-    bool set_RC_server(QString server);
+    bool set_RC_server(QString server,uint32_t port);
 
     bool send_RemoteControl_0xAB10(quint64 timestamp,int axis1,int axis2,int axis3,int axis4,int axis5,int axis6,int axis7,int axis8,
                                    int button1,int button2,int button3,int button4, int button5,int button6,int button7,int button8);
@@ -86,7 +86,7 @@ private:
     QTimer timer;
     QString RC_Server;
     UDPMessageHandler *udpmessagehandler;
-
+    uint32_t unicast_port;
     QElapsedTimer RemoteControl_AB10_timer;
     QElapsedTimer ArmControl_AB26_timer;
     QElapsedTimer Command_AB02_timer;

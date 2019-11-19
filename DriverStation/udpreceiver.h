@@ -80,7 +80,7 @@ public:
             return lastcomm_timer.elapsed();
         }
     }
-    void Start();
+    void Start(std::string multicast_group,uint32_t multicast_port);
 
 private slots:
     void processPendingDatagrams();

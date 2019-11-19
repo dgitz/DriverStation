@@ -5,11 +5,15 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    if(read_MiscConfigFile() == false)
+    {
+        qDebug() << "Unable to load MiscConfig File.  Exiting.";
+        kill_application(true);
+    }
     rx_image_counter = 0;
-    ROS_Server_IPAddress = "10.0.0.190";
-    DSRouter_IPAddress = "10.0.0.190";
+
     joystick_available = false;
-    Rover_IPAddress = "10.0.0.190";
+
     armdisarm_command = ROVERCOMMAND_DISARM;
     armdisarm_state = ARMEDSTATUS_DISARMED_CANNOTARM;
 
@@ -73,9 +77,9 @@ MainWindow::MainWindow(QWidget *parent) :
     current_axis_id = -1;
     calibrating = false;
 
-    myUDPTransmitter.set_RC_server(QString::fromStdString(ROS_Server_IPAddress));
+    myUDPTransmitter.set_RC_server(QString::fromStdString(Rover_IPAddress),Rover_UnicastPort);
 
-    myUDPReceiver.Start();
+    myUDPReceiver.Start(MulticastGroup,MulticastPort);
     myTCPReceiver.Start();
 
     QObject::connect(&camera,SIGNAL(newFrameReady(QImage,bool)),this,SLOT(newCameraImage(QImage,bool)));
@@ -2102,11 +2106,109 @@ int MainWindow::convert_pingms_tossi(int v)
         return 0;
     }
 }
+bool MainWindow::read_MiscConfigFile()
+{
+    QFile file("/home/robot/config/MiscConfig.xml");
+    if(!file.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cannot read MiscConfig File: " << file.errorString();
+        return false;
+    }
+    uint16_t parameters_read = 0;
+    uint16_t parameters_required = 6;
+    QXmlStreamReader reader(&file);
+    if (reader.readNextStartElement())
+    {
+        if (reader.name() == "MiscConfigFile")
+        {
+            while(reader.readNextStartElement())
+            {
+                if((reader.name() == "AddressList") || (reader.name() == "PortList"))
+                {
+                    while(reader.readNextStartElement())
+                    {
+                        if((reader.name() == "Address") || (reader.name() == "Port"))
+                        {
+                            QString capability = "";
+                            while(reader.readNextStartElement())
+                            {
+                                if(reader.name() == "Capability")
+                                {
+                                    capability = reader.readElementText();
+                                }
+                                else if(reader.name() == "Name")
+                                {
+                                    reader.skipCurrentElement();
+                                }
+                                else if(reader.name() == "Network")
+                                {
+                                    if(capability == "ROSServer")
+                                    {
+                                        ROS_Server_IPAddress = reader.readElementText().toStdString();
+                                        parameters_read++;
+                                    }
+                                    else if(capability == "Router")
+                                    {
+                                        DSRouter_IPAddress = reader.readElementText().toStdString();
+                                        parameters_read++;
+                                    }
+                                    else if(capability == "Rover")
+                                    {
+                                        Rover_IPAddress = reader.readElementText().toStdString();
+                                        parameters_read++;
+                                    }
+                                    else if(capability == "MulticastGroup")
+                                    {
+                                        MulticastGroup = reader.readElementText().toStdString();
+                                        parameters_read++;
+                                    }
+                                    else
+                                    {
+                                        reader.skipCurrentElement();
+                                    }
+                                }
+                                else if(reader.name() == "Number")
+                                {
+                                    if(capability == "MulticastPort")
+                                    {
+                                        MulticastPort = std::atoi(reader.readElementText().toStdString().c_str());
+                                        parameters_read++;
+                                    }
+                                    else if(capability == "RoverUnicastPort")
+                                    {
+                                        Rover_UnicastPort = std::atoi(reader.readElementText().toStdString().c_str());
+                                        parameters_read++;
+                                    }
+                                    else
+                                    {
+                                        reader.skipCurrentElement();
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+                else
+                {
+                    reader.skipCurrentElement();
+                }
+            }
+        }
+        else { return false; }
+    }
+    if(parameters_read != parameters_required)
+    {
+        qDebug() << "Not all parameters found in MiscConfig File.  Found: " << parameters_read;
+        return false;
+    }
+    qDebug() << "Loaded MiscConfig.xml";
+    return true;
+}
 void MainWindow::read_ControlGroupFile()
 {
     QFile file("/home/robot/config/ControlGroup.xml");
     if(!file.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "Cannot read file" << file.errorString();
+        qDebug() << "Cannot read ControlGroup File: " << file.errorString();
         return;
     }
     QXmlStreamReader reader(&file);
