@@ -60,13 +60,13 @@ UDPReceiver::UDPReceiver(QWidget *parent)
     any_comm_recived = false;
     lastcomm_timer.restart();
 }
-void UDPReceiver::Start()
+void UDPReceiver::Start(std::string multicast_group,uint32_t multicast_port)
 {
 
-    groupAddress = QHostAddress("239.255.43.21");
+    groupAddress = QHostAddress(QString::fromUtf8(multicast_group.c_str()));
     udpSocket = new QUdpSocket(this);
 
-    udpSocket->bind(QHostAddress::AnyIPv4, 45454, QUdpSocket::ShareAddress);
+    udpSocket->bind(QHostAddress::AnyIPv4, multicast_port, QUdpSocket::ShareAddress);
     QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
     foreach (QNetworkInterface iface, list)
     {

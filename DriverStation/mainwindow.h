@@ -132,6 +132,7 @@ public slots:
     void update_mockdata();
 
     void check_network();
+    bool read_MiscConfigFile();
     void read_ControlGroupFile();
     void check_ROSServer_finished(int code, QProcess::ExitStatus status);
     void check_DSRouter_finished(int code, QProcess::ExitStatus status);
@@ -237,6 +238,9 @@ private:
     std::string DSRouter_IPAddress;
     int DSRouter_Active;
     std::string Rover_IPAddress;
+    uint32_t Rover_UnicastPort;
+    std::string MulticastGroup;
+    uint32_t MulticastPort;
     int Rover_Active;
     int joystick_available;
         Camera camera;
