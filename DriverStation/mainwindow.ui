@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabCalibration">
      <attribute name="title">
@@ -1445,35 +1445,6 @@
         <width>831</width>
         <height>111</height>
        </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="iCameraView">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>60</y>
-        <width>640</width>
-        <height>480</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>CameraView</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="cbCameraStreamChooser">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>20</y>
-        <width>471</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="currentText">
-       <string/>
       </property>
      </widget>
      <widget class="QPushButton" name="bSoftware_Icon">

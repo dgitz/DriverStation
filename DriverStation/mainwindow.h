@@ -28,20 +28,9 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include "camera.h"
 #include <linux/joystick.h>
 #include <QtGamepad>
 #include <algorithm>
-
-#include <gst/app/gstappsink.h>
-#include <glib.h>
-//#define OPENCV_ENABLED
-#ifdef OPENCV_ENABLED
-#include <opencv2/opencv.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
-//#include <opencv2/imgcodecs.hpp>
-//using namespace cv;
-#endif
 
 
 
@@ -142,12 +131,6 @@ public slots:
     //SIMULATION CONTROL
     void bSimulationReset(const bool);
     void bSimulationPauseResume(const bool);
-    //CAMERA
-    void cameraStreamChanged(int v);
-    void newCameraImage(QImage,bool);
-    void newGSTCameraImage(guint8* map,bool);
-    void newCameraStatus(uint8_t);
-    void update_cameraoverlay();
 
     //DIAGNOSTIC WINDOW
     void bDiagnosticFilter_pressed();
@@ -243,7 +226,6 @@ private:
     uint32_t MulticastPort;
     int Rover_Active;
     int joystick_available;
-        Camera camera;
 
 
 
@@ -251,7 +233,6 @@ private:
     //QChartView *ResourceChartView;
 
     std::vector<Device> DeviceList;
-    std::vector<CameraStream> camerastreams;
     std::vector<int> buttons;
     QString messageviewer_filter;
     QString DeviceName;
@@ -283,8 +264,6 @@ private:
     std::vector<Port> ports;
 
     quint64 rx_image_counter;
-    uint8_t camera_status;
-    QImage camera_image;
     std::vector<Icon> icons;
     std::vector<int> icon_levels;
     int diagnostictype_filter;

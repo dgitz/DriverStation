@@ -54,10 +54,7 @@ SOURCES += main.cpp\
     udptransmitter.cpp \
     tcptransmitter.cpp \
     tcpreceiver.cpp \
-    udpmessage.cpp \
-    cameraworker.cpp \
-    camerastreamer.cpp \
-    camera.cpp
+    udpmessage.cpp
 
 HEADERS  += mainwindow.h \
     udptransmitter.h \
@@ -65,9 +62,6 @@ HEADERS  += mainwindow.h \
     tcpreceiver.h \
     tcptransmitter.h \
     udpmessage.h \
-    cameraworker.h \
-    camerastreamer.h \
-    camera.h \
     helper.h
 
 FORMS    += mainwindow.ui
