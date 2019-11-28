@@ -82,10 +82,6 @@ MainWindow::MainWindow(QWidget *parent) :
     myUDPReceiver.Start(MulticastGroup,MulticastPort);
     myTCPReceiver.Start();
 
-    QObject::connect(&camera,SIGNAL(newFrameReady(QImage,bool)),this,SLOT(newCameraImage(QImage,bool)));
-    //QObject::connect(&camera,SIGNAL(newGSTFrameReady(guint8*,bool)),this,SLOT(newGSTCameraImage(guint8*,bool)));
-    QObject::connect(&camera,SIGNAL(camera_status(uint8_t)),this,SLOT(newCameraStatus(uint8_t)));
-
     connect(ui->bClose,SIGNAL(clicked(bool)),SLOT(kill_application(bool)));
     connect(&myUDPReceiver,SIGNAL(new_diagnosticmessage(Diagnostic)),this,SLOT(update_messageviewer(Diagnostic)));
     connect(&myUDPReceiver,SIGNAL(new_armedstatusmessage(int)),this,SLOT(update_armeddisarmed_text(int)));
@@ -119,7 +115,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->bArmDisarm,SIGNAL(clicked(bool)),SLOT(bArmDisarm_pressed()));
     connect(ui->bControlGroupRead,SIGNAL(clicked(bool)),SLOT(read_ControlGroupFile()));
     connect(ui->cbControlGroup,SIGNAL(currentIndexChanged(QString)),SLOT(controlGroupChanged(QString)));
-    connect(ui->cbCameraStreamChooser,SIGNAL(currentIndexChanged(int)),SLOT(cameraStreamChanged(int)));
     connect(ui->bTuningPBigger,SIGNAL(clicked(bool)),SLOT(bTuningPBigger_pressed()));
     connect(ui->bTuningPSmaller,SIGNAL(clicked(bool)),SLOT(bTuningPSmaller_pressed()));
     connect(ui->bTuningIBigger,SIGNAL(clicked(bool)),SLOT(bTuningIBigger_pressed()));
@@ -278,17 +273,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_subsystemdiagnosticmessage(std::vector<int>)),this,SLOT(update_diagnosticicons(std::vector<int>)));
     connect(&myUDPReceiver,SIGNAL(new_systemstatemessage(SystemState)),this,SLOT(update_systemstate(SystemState)));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
-    connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
-    for(std::size_t i = 0; i < camerastreams.size(); i++)
-    {
-        QString tempstr = QString::fromStdString(camerastreams.at(i).DeviceName) + "@" + QString::fromStdString(camerastreams.at(i).hostname) + ":" + QString::number(camerastreams.at(i).port);
-        ui->cbCameraStreamChooser->addItem(tempstr);
-    }
-    ui->cbCameraStreamChooser->setCurrentText(0);
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
-    camera_status = CameraStatus::UNDEFINED;
     last_joy_sidebutton = 0;
     ui->bDiagnoticFilter->setText("");
     ui->bDiagnoticFilter->setVisible(false);
@@ -601,37 +588,6 @@ void MainWindow::cbSelectDOutputSignal(bool v)
     signal_doutput_enabled = v;
     reset_tuningview(true);
 }
-void MainWindow::cameraStreamChanged(int v)
-{
-    qDebug() << "starting" << QString::fromStdString(camerastreams.at(v).ip);
-    camera.startCapture(camerastreams.at(v).ip,camerastreams.at(v).port);
-}
-void MainWindow::newGSTCameraImage(guint8 *map,bool v)
-{
-#ifdef OPENCV_ENABLED
-    cv::Mat temp_mat = cv::Mat(cv::Size(640, 480+480/2), CV_8UC1, (char*)map);
-    cv::Mat result(480,640,3);
-    cv::cvtColor(temp_mat,result,CV_YUV2RGB_I420,3);
-    QImage rgb(result.size().width,result.size().height,QImage::Format_RGB888);
-    memcpy(rgb.scanLine(0), (unsigned char*)result.data, rgb.width() * rgb.height() * result.channels());
-    camera_image = rgb;
-#endif
-}
-void MainWindow::newCameraImage(QImage img, bool v)
-{
-
-    if(camera_status == CameraStatus::AVAILABLE)
-    {
-        rx_image_counter++;
-    }
-    else
-    {
-        rx_image_counter = 0;
-        elap_timer.restart();
-    }
-    camera_image = img;
-
-}
 void MainWindow::update_systemstate(const SystemState &state)
 {
     if(state.State == ROVERSTATE_SIMULATION)
@@ -654,32 +610,6 @@ void MainWindow::update_systemstate(const SystemState &state)
         }
     }
 }
-void MainWindow::update_cameraoverlay()
-{
-
-    if(camera_status == CameraStatus::AVAILABLE)
-    {
-
-        double framerate = rx_image_counter/(elap_timer.elapsed()/1000.0);
-        QPainter p(&camera_image);
-        p.setPen(QPen(Qt::green));
-        p.setFont(QFont("Times",12,QFont::Bold));
-        QString tempstr = "FPS: " + QString::number(framerate,'f',2);
-        p.drawText(540,400,80,15,Qt::AlignCenter,tempstr);
-
-        ui->iCameraView->setPixmap(QPixmap::fromImage(camera_image));
-    }
-    else
-    {
-        ui->iCameraView->setPixmap(QPixmap::fromImage(camera_image));
-    }
-
-}
-void MainWindow::newCameraStatus(uint8_t v)
-{
-    camera_status = v;
-}
-
 void MainWindow::controlGroupChanged(QString v)
 {
     for(std::size_t i = 0; i < controlgroups.size(); i++)
@@ -819,9 +749,7 @@ void MainWindow::maintabChanged()
     {
 
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
-        disconnect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_DiagnosticTab()));
-        disconnect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
         connect(timer_10ms,SIGNAL(timeout()),this,SLOT(check_set_allcontrols_todefault()));
         if(ui->CalibrationSubTab->currentIndex() == CALIBRATIONTAB_JOYSTICK)
         {
@@ -846,7 +774,6 @@ void MainWindow::maintabChanged()
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_CalibrationGroup()));
         disconnect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_DiagnosticTab()));
         connect(timer_50ms,SIGNAL(timeout()),this,SLOT(update_OperationPanel()));
-        connect(timer_100ms,SIGNAL(timeout()),this,SLOT(update_cameraoverlay()));
 
     }
     else if(ui->tabWidget->currentIndex() == DIAGNOSTIC_TAB)
@@ -2386,14 +2313,6 @@ bool MainWindow::load_DeviceFile()
 
                             }
                             DeviceList.push_back(dev);
-                            if(dev.Capability == "CameraStream")
-                            {
-                                CameraStream cam;
-                                cam.ip = "";
-                                cam.DeviceName = dev.DeviceName;
-                                cam.hostname = dev.ParentDevice;
-                                camerastreams.push_back(cam);
-                            }
                         }
 
                     }
@@ -2409,24 +2328,6 @@ bool MainWindow::load_DeviceFile()
             reader.skipCurrentElement();
         }
     }
-
-    for(std::size_t i = 0; i < camerastreams.size(); i++)
-    {
-        if(camerastreams.at(i).ip == "")
-        {
-            for(std::size_t j = 0; j < DeviceList.size();j++)
-            {
-                if(camerastreams.at(i).hostname == DeviceList.at(j).DeviceName)
-                {
-                    camerastreams.at(i).ip = DeviceList.at(j).PrimaryIP;
-                    camerastreams.at(i).port = 0;
-                    break;
-                }
-            }
-        }
-    }
-
-
     return true;
 }
 void MainWindow::init_udpmessageinfo()
@@ -2574,16 +2475,6 @@ bool MainWindow::load_MisConfigFile()
                         }
                     }
                 }
-            }
-        }
-    }
-    for(std::size_t i = 0; i < ports.size(); i++)
-    {
-        if(ports.at(i).name == "CameraPort")
-        {
-            for(std::size_t j = 0; j < camerastreams.size();j++)
-            {
-                camerastreams.at(j).port = ports.at(i).number;
             }
         }
     }
