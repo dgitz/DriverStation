@@ -2588,6 +2588,7 @@ void MainWindow::update_diagnosticicons()
             case 3:
                 ui->bSensors_Icon->setIcon(icon);
                 ui->bSensors_Icon->setIconSize(pixmap.rect().size());
+                break;
             case 4:
                 ui->bActuators_Icon->setIcon(icon);
                 ui->bActuators_Icon->setIconSize(pixmap.rect().size());
