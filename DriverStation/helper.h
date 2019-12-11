@@ -45,6 +45,14 @@ struct SystemState
     std::string StateText;
     std::string Description;
 };
+struct Power
+{
+    std::string BatteryName;
+    int PowerLevel;
+    int PowerState;
+    double Voltage;
+    double Current;
+};
 
 struct Port
 {

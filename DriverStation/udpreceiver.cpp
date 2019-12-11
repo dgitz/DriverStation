@@ -125,6 +125,25 @@ void UDPReceiver::processPendingDatagrams()
                 }
                 break;
             }
+            case POWER_ID:
+            {
+                std::string batteryname;
+                int powerlevel, powerstate;
+                double voltage,current;
+                if(udpmessagehandler->decode_PowerUDP(items,&batteryname,&powerlevel,&powerstate,&voltage,&current));
+                {
+                    any_comm_recived = true;
+                    lastcomm_timer.restart();
+                    Power newpower;
+                    newpower.BatteryName = batteryname;
+                    newpower.PowerLevel = powerlevel;
+                    newpower.PowerState = powerstate;
+                    newpower.Voltage = voltage;
+                    newpower.Current = current;
+                    emit new_powermessage(newpower);
+                }
+                break;
+            }
             case DEVICE_ID:
             {
                 std::string deviceparent,devicename,devicetype,architecture;

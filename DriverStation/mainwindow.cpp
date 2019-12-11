@@ -272,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&myUDPReceiver,SIGNAL(new_controlgroupvaluemessage(ControlGroupValue)),this,SLOT(update_tuningview(ControlGroupValue)));
     connect(&myUDPReceiver,SIGNAL(new_subsystemdiagnosticmessage(std::vector<int>)),this,SLOT(update_diagnosticicons(std::vector<int>)));
     connect(&myUDPReceiver,SIGNAL(new_systemstatemessage(SystemState)),this,SLOT(update_systemstate(SystemState)));
+    connect(&myUDPReceiver,SIGNAL(new_powermessage(Power)),this,SLOT(update_Power(Power)));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
     connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(check_network()));
     ui->tabWidget->setCurrentIndex(OPERATION_TAB);
@@ -457,6 +458,11 @@ MainWindow::MainWindow(QWidget *parent) :
     cbSelectIntegralErrorSignal(ui->cbSelectIntegralErrorSignal->isChecked());
     cbSelectDerivativeErrorSignal(ui->cbSelectDerivativeErrorSignal->isChecked());
 
+    //Battery Icon
+    QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_unknown.png");
+    QIcon icon(pixmap);
+    ui->bBattery_Icon->setIcon(icon);
+    ui->bBattery_Icon->setIconSize(pixmap.rect().size()/5.0);
 
 }
 void MainWindow::update_mockdata()
@@ -2553,6 +2559,64 @@ void MainWindow::init_icons()
         icon_levels.push_back(3); //Start with WARN
     }
     update_diagnosticicons();
+
+}
+void MainWindow::update_Power(const Power &power)
+{
+    std::string image_path;
+    bool powerinfo_available = true;
+    switch(power.PowerState)
+    {
+        case POWERSTATE_CHARGING:
+            image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_charging.png";
+            break;
+        case POWERSTATE_EMERGENCY:
+            image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_emergency.png";
+            break;
+        case POWERSTATE_NORMAL:
+            if(power.PowerLevel <= 25)
+            {
+                image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_25.png";
+            }
+            else if(power.PowerLevel <= 50)
+            {
+                image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_50.png";
+            }
+            else if(power.PowerLevel <= 75)
+            {
+                image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_75.png";
+            }
+            else if(power.PowerLevel <= 100)
+            {
+                image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_100.png";
+            }
+            else
+            {
+                image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_unknown.png";
+            }
+            break;
+        case POWERSTATE_UNDEFINED:
+            image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_unknown.png";
+            powerinfo_available = false;
+            break;
+        default:
+            image_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/power_icons/battery_unknown.png";
+            break;
+    }
+    QPixmap pixmap(QString::fromStdString(image_path));
+    QIcon icon(pixmap);
+    ui->bBattery_Icon->setIcon(icon);
+    ui->bBattery_Icon->setIconSize(pixmap.rect().size()/5.0);
+    QString powerinfo_string;
+    if(powerinfo_available == true)
+    {
+        powerinfo_string = QString("%2.1fV %2.1fA").arg(QString::number(power.Voltage),QString::number(power.Current));
+    }
+    else
+    {
+        powerinfo_string = "--.-V --.-A";
+    }
+    ui->tPower->setText(powerinfo_string);
 
 }
 void MainWindow::update_diagnosticicons()
