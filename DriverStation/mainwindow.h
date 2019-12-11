@@ -177,7 +177,7 @@ public slots:
     void cbSelectIOutputSignal(const bool);
     void cbSelectDOutputSignal(const bool);
 
-
+    void update_Power(const Power &power);
 
 signals:
     void new_diagnosticmessage(Diagnostic);

@@ -93,6 +93,7 @@ signals:
     void new_subsystemdiagnosticmessage(const std::vector<int>&);
     void new_controlgroupvaluemessage(const ControlGroupValue&);
     void new_systemstatemessage(const SystemState&);
+    void new_powermessage(const Power&);
 private:
 
     QUdpSocket *udpSocket;
