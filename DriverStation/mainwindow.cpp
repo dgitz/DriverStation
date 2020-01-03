@@ -242,7 +242,7 @@ MainWindow::MainWindow(QWidget *parent) :
         DSRouter_Active = 0;
     }
     {
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSServer_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSSERVER_Unactive.png");
         ui->iROSServerActive->setPixmap(pixmap);
         ui->iROSServerActive->setMask(pixmap.mask());
         ui->iROSServerActive->show();
@@ -639,7 +639,7 @@ void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
     if(code == 0) // ping successful
     {
         ROSServer_Active = 1;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSServer_Active.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/ROSSERVER_Active.png");
         ui->iROSServerActive->setPixmap(pixmap);
         QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_" + QString::number(convert_pingms_tossi(ROSServer_pingtimer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
@@ -649,7 +649,7 @@ void MainWindow::check_ROSServer_finished(int code, QProcess::ExitStatus status)
     else // ping unsuccessful
     {
         ROSServer_Active = 0;
-        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_iconss/ROSServer_Unactive.png");
+        QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_iconss/ROSSERVER_Unactive.png");
         ui->iROSServerActive->setPixmap(pixmap);
         QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_0.png";
         QPixmap pixmap2(ssi_path);
@@ -684,7 +684,7 @@ void MainWindow::check_Rover_finished(int code, QProcess::ExitStatus status)
         Rover_Active = 1;
         QPixmap pixmap("/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/system_icons/Rover_Active.png");
         ui->iRoverActive->setPixmap(pixmap);
-        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/icons/SSI_" + QString::number(convert_pingms_tossi(Rover_pingtimer.elapsed())) + ".png";
+        QString ssi_path = "/home/robot/Dropbox/ICARUS/DriverStation/MEDIA/wificomm_icons/SSI_" + QString::number(convert_pingms_tossi(Rover_pingtimer.elapsed())) + ".png";
         QPixmap pixmap2(ssi_path);
         ui->iRoverSignal->setPixmap(pixmap2);
     }
@@ -883,7 +883,6 @@ void MainWindow::calibrate_Axis(int v)
         ui->bYAxisCal->setEnabled(false);
         ui->bZAxisCal->setEnabled(false);\
         Axis axis = lookup_joystickaxis(joystick,v);
-        qDebug() << "id: " << QString::number(v);
         current_axis_id = v;
         ui->lCalibrateOption->setText("Calibrating: " + axis.name);
 
@@ -2626,7 +2625,7 @@ void MainWindow::update_diagnosticicons()
         if(icon_levels.at(i) != icons.at(i).current_level_shown)
         {
             std::string image_path = icons.at(i).icon_image_paths.at(map_diagnosticlevel_toiconindex(icon_levels.at(i)));
-            qDebug() << "[" << i << "] Updating Icon: " << QString::fromStdString(icons.at(i).name) << " image with path: " << QString::fromStdString(image_path);
+            //qDebug() << "[" << i << "] Updating Icon: " << QString::fromStdString(icons.at(i).name) << " image with path: " << QString::fromStdString(image_path);
             QPixmap pixmap(QString::fromStdString(image_path));
             QIcon icon(pixmap);
 
