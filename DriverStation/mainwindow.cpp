@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
                                    "background-color: orange;"
                                    "font: bold italic 36px;");
     ui->tEStopState->setText("LOST COMM!");
+    ui->bArmDisarm->setStyleSheet("background-color: red;");
     messageviewer_filter = "";
     current_axis_id = -1;
     calibrating = false;
@@ -1026,6 +1027,7 @@ void MainWindow::update_commstatus()
                                        "background-color: orange;"
                                        "font: bold italic 36px;");
         ui->tEStopState->setText("LOST COMM!");
+        ui->bArmDisarm->setStyleSheet("background-color: red;");
         for(std::size_t i = 0; i < icon_levels.size(); ++i)
         {
             icon_levels.at(i) = LEVEL_UNKNOWN;
@@ -1241,20 +1243,23 @@ void MainWindow::clearfilter_messageviewer()
 }
 void MainWindow::update_armeddisarmed_text(int value)
 {
+    //xxx
     new_udpmsgreceived(UDP_Arm_Status_ID);
     armdisarm_state = value;
     QString tempstr;
+    QString background_color;
     switch (value)
     {
-    case ARMEDSTATUS_ARMED: tempstr = "ARMED"; break;
-    case ARMEDSTATUS_ARMING: tempstr = "ARMING"; break;
-    case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; break;
-    case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMED\nCANNOT ARM"; break;
-    case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; break;
-    case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED"; break;
-    default: tempstr = "UNDEFINED"; break;
+    case ARMEDSTATUS_ARMED: tempstr = "ARMED"; background_color = "purple"; break;
+    case ARMEDSTATUS_ARMING: tempstr = "ARMING"; background_color = "purple"; break;
+    case ARMEDSTATUS_DISARMED: tempstr = "DISARMED"; background_color = "green"; break;
+    case ARMEDSTATUS_DISARMED_CANNOTARM: tempstr = "DISARMED\nCANNOT ARM"; background_color = "yellow"; break;
+    case ARMEDSTATUS_DISARMING: tempstr = "DISARMING"; background_color = "green"; break;
+    case ARMEDSTATUS_UNDEFINED: tempstr = "UNDEFINED"; background_color = "red"; break;
+    default: tempstr = "UNDEFINED"; background_color = "red"; break;
     }
-    ui->bArmDisarm->setText(tempstr);
+    ui->bArmDisarm->setText(tempstr);     
+    ui->bArmDisarm->setStyleSheet("background-color: " + background_color + ";");
 }
 void MainWindow::update_resource(const Resource &resource)
 {

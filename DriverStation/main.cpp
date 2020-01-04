@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QtCharts/QChartView>
-
+#include <QDesktopWidget>
 
 
 /*
@@ -65,8 +65,17 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     MainWindow w;
-    w.showMaximized();
-
+   // w.showMaximized();
+   // w.showNormal();
+    w.setGeometry(
+        QStyle::alignedRect(
+            Qt::LeftToRight,
+            Qt::AlignCenter,
+            w.size(),
+            qApp->desktop()->availableGeometry()
+        )
+    );
+    w.show();
 
     /*
     QGst::init(&argc, &argv);
