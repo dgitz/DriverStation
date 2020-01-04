@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1438</width>
-    <height>878</height>
+    <width>1366</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,9 +17,9 @@
    <widget class="QPushButton" name="bClose">
     <property name="geometry">
      <rect>
-      <x>920</x>
-      <y>780</y>
-      <width>151</width>
+      <x>1180</x>
+      <y>560</y>
+      <width>141</width>
       <height>91</height>
      </rect>
     </property>
@@ -32,8 +32,8 @@
      <rect>
       <x>20</x>
       <y>50</y>
-      <width>1051</width>
-      <height>721</height>
+      <width>961</width>
+      <height>711</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -48,12 +48,12 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>851</width>
-        <height>411</height>
+        <width>951</width>
+        <height>671</height>
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabCalibrationJoystick">
        <attribute name="title">
@@ -214,10 +214,10 @@
        <widget class="QWidget" name="gridLayoutWidget_4">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>10</x>
           <y>0</y>
           <width>594</width>
-          <height>211</height>
+          <height>181</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_7">
@@ -429,8 +429,8 @@
        <widget class="QWidget" name="gridLayoutWidget">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>300</y>
+          <x>10</x>
+          <y>180</y>
           <width>271</width>
           <height>141</height>
          </rect>
@@ -470,9 +470,9 @@
         <property name="geometry">
          <rect>
           <x>320</x>
-          <y>280</y>
+          <y>180</y>
           <width>269</width>
-          <height>181</height>
+          <height>141</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_4">
@@ -619,7 +619,7 @@
           <x>250</x>
           <y>60</y>
           <width>21</width>
-          <height>521</height>
+          <height>301</height>
          </rect>
         </property>
         <property name="orientation">
@@ -632,7 +632,7 @@
           <x>520</x>
           <y>110</y>
           <width>21</width>
-          <height>471</height>
+          <height>251</height>
          </rect>
         </property>
         <property name="orientation">
@@ -1118,6 +1118,282 @@
          <string>TX Tuning</string>
         </property>
        </widget>
+       <widget class="QPushButton" name="bResetTuningGraph">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>420</y>
+          <width>31</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Reset Graph</string>
+        </property>
+        <property name="text">
+         <string>R</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectDerivativeErrorSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>520</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Dev Error</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectErrorPercSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>460</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Error (%)</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectCommandSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>370</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Command</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_15">
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>390</y>
+          <width>101</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Overshoot:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectOutputSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>400</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Output</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QChartView" name="gTuningView">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>420</y>
+          <width>791</width>
+          <height>211</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_14">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>390</y>
+          <width>101</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Undershoot:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="bTuningStartCapture">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>470</y>
+          <width>31</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Capture</string>
+        </property>
+        <property name="text">
+         <string>C</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectSenseSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>340</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sense</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QTextEdit" name="tUndershootPerc">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>380</y>
+          <width>151</width>
+          <height>31</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QTextEdit" name="tOvershootPerc">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>380</y>
+          <width>151</width>
+          <height>31</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectErrorSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>430</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Error</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectIntegralErrorSignal">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>490</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Int Error</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectIOutput">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>580</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>I Out</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectPOutput">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>550</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>P Out</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cbSelectDOutput">
+        <property name="geometry">
+         <rect>
+          <x>850</x>
+          <y>610</y>
+          <width>92</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>D Out</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
        <zorder>dTuningP</zorder>
        <zorder>dTuningD</zorder>
        <zorder>dTuningI</zorder>
@@ -1151,283 +1427,24 @@
        <zorder>lTuningMinValue</zorder>
        <zorder>lTuningDefaultValue</zorder>
        <zorder>bTransmitTuning</zorder>
+       <zorder>bResetTuningGraph</zorder>
+       <zorder>cbSelectDerivativeErrorSignal</zorder>
+       <zorder>cbSelectErrorPercSignal</zorder>
+       <zorder>cbSelectCommandSignal</zorder>
+       <zorder>label_15</zorder>
+       <zorder>cbSelectOutputSignal</zorder>
+       <zorder>gTuningView</zorder>
+       <zorder>label_14</zorder>
+       <zorder>bTuningStartCapture</zorder>
+       <zorder>cbSelectSenseSignal</zorder>
+       <zorder>tUndershootPerc</zorder>
+       <zorder>tOvershootPerc</zorder>
+       <zorder>cbSelectErrorSignal</zorder>
+       <zorder>cbSelectIntegralErrorSignal</zorder>
+       <zorder>cbSelectIOutput</zorder>
+       <zorder>cbSelectPOutput</zorder>
+       <zorder>cbSelectDOutput</zorder>
       </widget>
-     </widget>
-     <widget class="QChartView" name="gTuningView">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>460</y>
-        <width>851</width>
-        <height>261</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectSenseSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>420</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Sense</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectCommandSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>450</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Command</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectOutputSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>480</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Output</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectErrorSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>510</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Error</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectErrorPercSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>540</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Error (%)</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectDerivativeErrorSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>600</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Dev Error</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectIOutput">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>660</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>I Out</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectDOutput">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>690</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>D Out</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectPOutput">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>630</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>P Out</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cbSelectIntegralErrorSignal">
-      <property name="geometry">
-       <rect>
-        <x>920</x>
-        <y>570</y>
-        <width>92</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Int Error</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="bResetTuningGraph">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>420</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="toolTip">
-       <string>Reset Graph</string>
-      </property>
-      <property name="text">
-       <string>R</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="bTuningStartCapture">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>470</y>
-        <width>31</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="toolTip">
-       <string>Capture</string>
-      </property>
-      <property name="text">
-       <string>C</string>
-      </property>
-     </widget>
-     <widget class="QTextEdit" name="tUndershootPerc">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>420</y>
-        <width>151</width>
-        <height>31</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_14">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>430</y>
-        <width>101</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Undershoot:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_15">
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>430</y>
-        <width>101</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="text">
-       <string>Overshoot:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QTextEdit" name="tOvershootPerc">
-      <property name="geometry">
-       <rect>
-        <x>410</x>
-        <y>420</y>
-        <width>151</width>
-        <height>31</height>
-       </rect>
-      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabOperation">
@@ -1441,9 +1458,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>580</y>
-        <width>831</width>
-        <height>111</height>
+        <y>330</y>
+        <width>941</width>
+        <height>341</height>
        </rect>
       </property>
      </widget>
@@ -1693,7 +1710,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>550</y>
+        <y>300</y>
         <width>511</width>
         <height>25</height>
        </rect>
@@ -1727,10 +1744,10 @@
    <widget class="QPushButton" name="tEStopState">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>780</y>
-      <width>701</width>
-      <height>91</height>
+      <x>660</x>
+      <y>10</y>
+      <width>321</width>
+      <height>61</height>
      </rect>
     </property>
     <property name="font">
@@ -1752,8 +1769,8 @@
    <widget class="QLabel" name="iRoverSignal">
     <property name="geometry">
      <rect>
-      <x>1250</x>
-      <y>440</y>
+      <x>1150</x>
+      <y>400</y>
       <width>175</width>
       <height>155</height>
      </rect>
@@ -1886,8 +1903,8 @@
    <widget class="QLabel" name="iRoverActive">
     <property name="geometry">
      <rect>
-      <x>1090</x>
-      <y>440</y>
+      <x>990</x>
+      <y>400</y>
       <width>155</width>
       <height>155</height>
      </rect>
@@ -2020,8 +2037,8 @@
    <widget class="QLabel" name="iROSSignal">
     <property name="geometry">
      <rect>
-      <x>1250</x>
-      <y>280</y>
+      <x>1150</x>
+      <y>240</y>
       <width>175</width>
       <height>155</height>
      </rect>
@@ -2154,8 +2171,8 @@
    <widget class="QLabel" name="iRouterSignal">
     <property name="geometry">
      <rect>
-      <x>1250</x>
-      <y>120</y>
+      <x>1150</x>
+      <y>80</y>
       <width>175</width>
       <height>155</height>
      </rect>
@@ -2288,8 +2305,8 @@
    <widget class="QLabel" name="iRouterActive">
     <property name="geometry">
      <rect>
-      <x>1090</x>
-      <y>120</y>
+      <x>990</x>
+      <y>80</y>
       <width>155</width>
       <height>155</height>
      </rect>
@@ -2415,6 +2432,9 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
     <property name="text">
      <string/>
     </property>
@@ -2422,8 +2442,8 @@
    <widget class="QLabel" name="iROSServerActive">
     <property name="geometry">
      <rect>
-      <x>1090</x>
-      <y>280</y>
+      <x>990</x>
+      <y>240</y>
       <width>155</width>
       <height>155</height>
      </rect>
@@ -2556,9 +2576,9 @@
    <widget class="QPushButton" name="bArmDisarm">
     <property name="geometry">
      <rect>
-      <x>1110</x>
-      <y>40</y>
-      <width>281</width>
+      <x>990</x>
+      <y>10</y>
+      <width>331</width>
       <height>61</height>
      </rect>
     </property>
@@ -2575,8 +2595,8 @@
    <widget class="QPushButton" name="bResetSim">
     <property name="geometry">
      <rect>
-      <x>730</x>
-      <y>780</y>
+      <x>990</x>
+      <y>560</y>
       <width>181</width>
       <height>41</height>
      </rect>
@@ -2588,8 +2608,8 @@
    <widget class="QPushButton" name="bPauseResumeSim">
     <property name="geometry">
      <rect>
-      <x>730</x>
-      <y>830</y>
+      <x>990</x>
+      <y>610</y>
       <width>181</width>
       <height>41</height>
      </rect>
@@ -2601,7 +2621,7 @@
    <widget class="QPushButton" name="bBattery_Icon">
     <property name="geometry">
      <rect>
-      <x>710</x>
+      <x>450</x>
       <y>10</y>
       <width>86</width>
       <height>58</height>
@@ -2620,7 +2640,7 @@
    <widget class="QLabel" name="tPower">
     <property name="geometry">
      <rect>
-      <x>810</x>
+      <x>550</x>
       <y>16</y>
       <width>111</width>
       <height>41</height>
