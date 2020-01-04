@@ -65,9 +65,9 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     MainWindow w;
-   // w.showMaximized();
+    w.showFullScreen();
    // w.showNormal();
-    w.setGeometry(
+    /*w.setGeometry(
         QStyle::alignedRect(
             Qt::LeftToRight,
             Qt::AlignCenter,
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
         )
     );
     w.show();
-
+    */
     /*
     QGst::init(&argc, &argv);
     //Need to implement this string as a string
