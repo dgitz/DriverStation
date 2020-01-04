@@ -2432,6 +2432,9 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
     <property name="text">
      <string/>
     </property>

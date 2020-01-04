@@ -66,35 +66,5 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.showFullScreen();
-   // w.showNormal();
-    /*w.setGeometry(
-        QStyle::alignedRect(
-            Qt::LeftToRight,
-            Qt::AlignCenter,
-            w.size(),
-            qApp->desktop()->availableGeometry()
-        )
-    );
-    w.show();
-    */
-    /*
-    QGst::init(&argc, &argv);
-    //Need to implement this string as a string
-    //gst-launch -v udpsrc port=8888 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! ffdec_h264 ! xvimagesink sync=false
-
-    QGst::PipelinePtr pipeline1;
-
-    const char *caps = "application/x-rtp, encoding-name=JPEG,payload=26";
-
-
-    QString pipe1Descr = QString("udpsrc port=5001 ! %1 ! rtpjpegdepay ! "
-                                 "jpegdec ! "
-                                 "appsink").arg(caps);
-    pipeline1 = QGst::Parse::launch(pipe1Descr).dynamicCast<QGst::Pipeline>();
-    //QGlib::connect(pipeline1->bus(), "message::error", this, &Player::onBusMessage);
-    //pipeline1->bus()->addSignalWatch();
-
-    pipeline1->setState(QGst::StatePlaying);
-    */
     return a.exec();
 }
