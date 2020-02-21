@@ -226,6 +226,7 @@ private:
     uint32_t MulticastPort;
     int Rover_Active;
     int joystick_available;
+    int pov_left,pov_right,pov_up,pov_down;
 
 
 
