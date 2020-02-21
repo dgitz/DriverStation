@@ -1279,6 +1279,7 @@ void MainWindow::read_joystick()
         joy_button[js.number] = js.value;
         break;
     }
+
     //Read ArmDisarm Button
     if((last_joy_sidebutton == 0) && (joy_button[JOY_BUTTON_SIDE] == 1))
     {
@@ -1416,7 +1417,36 @@ void MainWindow::update_OperationPanel()
 
         QDateTime currentdatetime = QDateTime::currentDateTime();
         quint64 unixtime = currentdatetime.toMSecsSinceEpoch();
-
+        if(joy_axis[JOY_POV_HORZ] < 0)
+        {
+            pov_left = 1;
+            pov_right = 0;
+        }
+        else if(joy_axis[JOY_POV_HORZ] > 0)
+        {
+            pov_right = 1;
+            pov_left = 0;
+        }
+        else
+        {
+            pov_left = 0;
+            pov_right = 0;
+        }
+        if(joy_axis[JOY_POV_VERT] > 0)
+        {
+            pov_down = 1;
+            pov_up = 0;
+        }
+        else if(joy_axis[JOY_POV_VERT] < 0)
+        {
+            pov_up = 1;
+            pov_down = 0;
+        }
+        else
+        {
+            pov_up = 0;
+            pov_down = 0;
+        }
         new_udpmsgsent(UDP_RemoteControl_ID);
         myUDPTransmitter.send_RemoteControl_0xAB10(unixtime,
                                                    x_out,
@@ -1430,10 +1460,10 @@ void MainWindow::update_OperationPanel()
                                                    joy_button[JOY_BUTTON_TRIGGER],
                                                    joy_button[JOY_BUTTON_MIDDLE],
                                                    joy_button[JOY_BUTTON_SIDE],
-                                                   0,
-                                                   0,
-                                                   0,
-                                                   0,
+                                                   pov_left,
+                                                   pov_right,
+                                                   pov_up,
+                                                   pov_down,
                                                    0);
     }
     else
@@ -1484,31 +1514,43 @@ void MainWindow::update_CalibrationPanel()
         ui->bJoyButton3->setDown(joy_button[JOY_BUTTON_SIDE]);
         if(joy_axis[JOY_POV_HORZ] < 0)
         {
+            pov_left = 1;
+            pov_right = 0;
             ui->bJoyPOVLeft->setDown(true);
             ui->bJoyPOVRight->setDown(false);
         }
         else if(joy_axis[JOY_POV_HORZ] > 0)
         {
+            pov_right = 1;
+            pov_left = 0;
             ui->bJoyPOVLeft->setDown(false);
             ui->bJoyPOVRight->setDown(true);
         }
         else
         {
+            pov_left = 0;
+            pov_right = 0;
             ui->bJoyPOVLeft->setDown(false);
             ui->bJoyPOVRight->setDown(false);
         }
         if(joy_axis[JOY_POV_VERT] > 0)
         {
+            pov_down = 1;
+            pov_up = 0;
             ui->bJoyPOVDown->setDown(true);
             ui->bJoyPOVUp->setDown(false);
         }
         else if(joy_axis[JOY_POV_VERT] < 0)
         {
+            pov_up = 1;
+            pov_down = 0;
             ui->bJoyPOVDown->setDown(false);
             ui->bJoyPOVUp->setDown(true);
         }
         else
         {
+            pov_up = 0;
+            pov_down = 0;
             ui->bJoyPOVDown->setDown(false);
             ui->bJoyPOVUp->setDown(false);
         }
@@ -1528,10 +1570,10 @@ void MainWindow::update_CalibrationPanel()
                                                    joy_button[JOY_BUTTON_TRIGGER],
                                                    joy_button[JOY_BUTTON_MIDDLE],
                                                    joy_button[JOY_BUTTON_SIDE],
-                                                   0,
-                                                   0,
-                                                   0,
-                                                   0,
+                                                   pov_left,
+                                                   pov_right,
+                                                   pov_up,
+                                                   pov_down,
                                                    0);
 
     }
