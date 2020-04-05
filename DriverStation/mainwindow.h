@@ -31,7 +31,8 @@
 #include <linux/joystick.h>
 #include <QtGamepad>
 #include <algorithm>
-
+#include<boost/algorithm/string/split.hpp>
+#include<boost/algorithm/string.hpp>
 
 
 #define JOY_X_AXIS 0
@@ -108,6 +109,7 @@ public slots:
     void send_Heartbeat_message();
     void bArmDisarm_pressed();
     void maintabChanged();
+    void update_TimeSync();
 
     void b1_pressed();
     void b2_pressed();
@@ -196,6 +198,7 @@ private:
     std::vector<UDPMessageInfo> udp_messages;
     bool new_udpmsgreceived(std::string id);
     bool new_udpmsgsent(std::string id);
+    std::string exec(const char* cmd,bool wait_for_result);
     QElapsedTimer elap_timer;
     Ui::MainWindow *ui;
     UDPReceiver myUDPReceiver;
@@ -312,6 +315,10 @@ private:
     //QtCharts::QChart *tuning_chart;
 
     //QLabel iRouterActive;
+
+    //TimeSync Statistics
+    std::string TimeServer;
+    uint64_t timesync_update_counter;
 
 };
 

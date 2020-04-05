@@ -465,6 +465,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->bBattery_Icon->setIcon(icon);
     ui->bBattery_Icon->setIconSize(pixmap.rect().size()/5.0);
 
+    //Timing Stuff
+    TimeServer = "MasterModule";
+    timesync_update_counter = 0;
+    ui->bTimeSyncStatus->setStyleSheet("color: black;"
+                                   "background-color: red;"
+                                   "font: bold italic 14px;");
+    connect(timer_5000ms,SIGNAL(timeout()),this,SLOT(update_TimeSync()));
+    update_TimeSync();
+
 }
 void MainWindow::update_mockdata()
 {
@@ -2841,4 +2850,134 @@ void MainWindow::bSimulationPauseResume(const bool)
         myUDPTransmitter.send_Command_0xAB02(ROVERCOMMAND_SIMULATIONCCONTROL,ROVERCOMMAND_SIMULATIONCONTROL_STARTSIM,0,0,"","");
     }
 
+}
+void MainWindow::update_TimeSync()
+{
+    char cmd[512];
+    sprintf(cmd,"ntpq -p | grep %s",TimeServer.c_str());
+    std::string exec_result = exec(cmd,true);
+    std::vector<std::string> items;
+    boost::split(items,exec_result,boost::is_any_of("\t "),boost::token_compress_on);
+    int delay_index = -1;
+    int offset_index = -1;
+    int jitter_index = -1;
+    if(items.size() == 10)
+    {
+        delay_index = 7;
+        offset_index = 8;
+        jitter_index = 9;
+    }
+    else if(items.size() == 11)
+    {
+        delay_index = 8;
+        offset_index = 9;
+        jitter_index = 10;
+    }
+    else
+    {
+        char tempstr[1024];
+        sprintf(tempstr,"Improperly formatted NTP Command:\n%s\n Result: %s\n",cmd,exec_result.c_str());
+        qDebug() << tempstr;
+
+    }
+    std::size_t found1 = items.at(0).find(TimeServer);
+    std::size_t found2 = items.at(1).find(TimeServer);
+    if((found1== std::string::npos) and (found2== std::string::npos))
+    {
+        char tempstr[512];
+        sprintf(tempstr,"Time Server: %s Not Found",TimeServer.c_str());
+        qDebug() << tempstr;
+    }
+    double delay = std::atof(items.at(delay_index).c_str())*1000.0;
+    double offset = std::atof(items.at(offset_index).c_str())*1000.0;
+    double jitter = std::atof(items.at(jitter_index).c_str())*1000.0;
+
+    int host_index = -1;
+    if(found1 != std::string::npos)
+    {
+        host_index = 0;
+    }
+    else
+    {
+        host_index = 1;
+    }
+    std::string host_field = items.at(host_index);
+    char tempstr2[512];
+    bool timesync_active = false;
+    switch(host_field.at(0))
+    {
+        case '-':
+            sprintf(tempstr2,"Time Server: %s\n Not Being Used by NTP.",TimeServer.c_str());
+            break;
+        case '+':
+            sprintf(tempstr2,"Time Server: %s Being Used by NTP.",TimeServer.c_str());
+            timesync_active = true;
+            break;
+        case '*':
+            sprintf(tempstr2,"Time Server: %s Being Used by NTP.",TimeServer.c_str());
+            timesync_active = true;
+            break;
+        default:
+            sprintf(tempstr2,"Time Server: %s\n Not Being Used by NTP.",TimeServer.c_str());
+            break;
+    }
+    ui->tTimeSyncDelay->setText(QString::number(delay/1000.0));
+    ui->tTimeSyncJitter->setText(QString::number(jitter/1000.0));
+    ui->tTimeSyncOffset->setText(QString::number(offset/1000.0));
+    ui->tTimeSyncUpdateCount->display((int)timesync_update_counter);
+    if(timesync_active == true)
+    {
+        ui->bTimeSyncStatus->setText("Time Synchronized!");
+        ui->bTimeSyncStatus->setStyleSheet("color: black;"
+                                       "background-color: green;"
+                                       "font: bold italic 14px;");
+    }
+    else
+    {
+        QString str = "Time Not Synchronized:\n" + QString::fromStdString(std::string(tempstr2));
+        ui->bTimeSyncStatus->setText(str);
+        ui->bTimeSyncStatus->setStyleSheet("color: black;"
+                                       "background-color: red;"
+                                       "font: bold italic 14px;");
+    }
+    timesync_update_counter++;
+
+}
+std::string MainWindow::exec(const char *cmd, bool wait_for_result)
+{
+    char buffer[512];
+    std::string result = "";
+    try
+    {
+        FILE *pipe = popen(cmd, "r");
+        if (wait_for_result == false)
+        {
+            pclose(pipe);
+            return "";
+        }
+        if (!pipe)
+        {
+            pclose(pipe);
+            return "";
+        }
+        try
+        {
+            while (!feof(pipe))
+            {
+                if (fgets(buffer, 512, pipe) != NULL)
+                    result += buffer;
+            }
+        }
+        catch (std::exception e)
+        {
+            pclose(pipe);
+            return "";
+        }
+        pclose(pipe);
+        return result;
+    }
+    catch(std::exception e)
+    {
+        return "";
+    }
 }
